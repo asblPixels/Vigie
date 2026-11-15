@@ -1,0 +1,18 @@
+name: Arnaque non détectée
+description: Un message frauduleux que Vigie ne signale pas
+labels: [regle]
+body:
+  - type: markdown
+    attributes:
+      value: "Masquez vos données personnelles (nom, numéro, IBAN) avant de coller le message."
+  - type: textarea
+    id: message
+    attributes: { label: Le message (texte seulement), description: Collez-le tel quel, en masquant ce qui est personnel }
+    validations: { required: true }
+  - type: dropdown
+    id: verdict
+    attributes: { label: Verdict donné par Vigie, options: [Aucun signe connu, Prudence, Arnaque probable] }
+    validations: { required: true }
+  - type: input
+    id: canal
+    attributes: { label: Comment l'avez-vous reçu ?, placeholder: SMS, courriel, courrier, appel… }

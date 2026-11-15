@@ -1,168 +1,142 @@
-<p align="center"><img src="static/logo.svg" alt="Vigie, door Pixel's ASBL" width="340"></p>
+<div align="center">
 
-<p align="center">
-<a href="README.md">Français</a> · <b>Nederlands</b> · <a href="README.it.md">Italiano</a> · <a href="README.de.md">Deutsch</a>
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="static/logo-sombre.svg">
+  <img src="static/logo.svg" alt="Vigie, door Pixel's ASBL" width="420">
+</picture>
 
-<p align="center"><b>Is het oplichting? Controleer het met één foto.</b><br>
-Gratis · Zonder reclame · Er wordt niets naar het internet gestuurd</p>
+### De gratis, offline anti-oplichtingshulp<br>voor wie weinig thuis is in de digitale wereld.
 
----
+[Français](README.md) · **Nederlands** · [Italiano](README.it.md) · [Deutsch](README.de.md)
 
-> **Status:** prototype in testfase. Privéopslagplaats, niet verspreiden.
-> **Taal van de toepassing:** voorlopig alleen in het Frans.
+![Licentie](https://img.shields.io/badge/licentie-GPL--3.0-0E2A38?style=flat-square)
+![Android](https://img.shields.io/badge/Android-zelfstandig-007A7A?style=flat-square)
+![Linux](https://img.shields.io/badge/Linux-Fedora-007A7A?style=flat-square)
+![Offline](https://img.shields.io/badge/werkt-offline-14B8A6?style=flat-square)
+![Zonder account](https://img.shields.io/badge/zonder-account%20of%20reclame-14B8A6?style=flat-square)
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/capture-accueil-dark.png">
+  <img src="docs/capture-accueil-light.png" alt="Startscherm van Vigie" width="260">
+</picture>
+&nbsp;&nbsp;
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/capture-arnaque-dark.png">
+  <img src="docs/capture-arnaque-light.png" alt="Vigie meldt waarschijnlijke oplichting" width="260">
+</picture>
+
+</div>
+
+> **Privé-repository.** Vigie is in ontwikkeling en nog niet voor het publiek toegankelijk.
 
 ## In het kort
 
-U krijgt een sms, een e-mail of een brief die u ongerust maakt? Open **Vigie** en plak het bericht of neem er een foto van. Na enkele seconden antwoordt Vigie:
+Maakt een sms, e-mail of brief u ongerust? **Fotografeer** of **plak** hem in Vigie. Binnen enkele seconden geeft Vigie een van drie uitspraken, in grote letters en eenvoudige taal:
 
-- 🔴 **Waarschijnlijk oplichting**: doe niets.
-- 🟠 **Opgelet**: controleer eerst voor u iets doet.
-- 🟢 **Geen bekend teken**: niets verdachts gevonden (dat is geen garantie).
+| Uitspraak | Wat Vigie zegt |
+|---|---|
+| **Waarschijnlijk oplichting** | Doe niets met dit bericht. Dit zijn de drie stappen. |
+| **Wees voorzichtig** | Er zijn verdachte signalen. Controleer eerst. |
+| **Geen bekende signalen** | Niets verdachts gevonden, maar blijf alert: het is geen garantie. |
 
-U ziet ook **wat u moet doen** (3 eenvoudige stappen), **waarom** Vigie dat denkt, en een knop om **een vertrouwenspersoon te bellen**.
+Vigie is gemaakt voor mensen die weinig met digitale hulpmiddelen werken: één scherm, één handeling, grote knoppen, een lettertype dat is ontworpen voor leesbaarheid en een voorleesfunctie.
 
-<p align="center">
-<img src="docs/capture-accueil.png" alt="Startscherm" width="250">
-<img src="docs/capture-arnaque.png" alt="Resultaat: waarschijnlijk oplichting" width="250">
-</p>
+## Waarom Vigie
 
-## Hoe werkt het?
+- **Gratis en vrij.** Geen abonnement, geen account, geen reclame. Licentie GPL-3.0.
+- **Offline en privé.** Het bericht wordt op het toestel geanalyseerd en nergens naartoe verstuurd.
+- **Transparant.** De uitspraken komen uit leesbare regels (`regles.py`), niet uit een zwarte doos. Een optionele lokale AI kan het resultaat toelichten, nooit bepalen.
+- **Voor iedereen.** U mag het bericht van iemand anders fotograferen: een ouder, een buur, een ontvangen brief.
+- **Een vertrouwenspersoon die u zelf kiest.** Bij twijfel stelt Vigie voor de persoon te bellen die u zelf uit uw contacten koos. Niemand anders.
 
-Vigie wordt **één keer** geïnstalleerd op een computer thuis. Daarna:
+## Installeren
 
-- **Op de computer**: u opent het in de browser (Firefox, Chrome, Edge, Safari).
-- **Op de gsm of tablet** (iPhone, iPad, Android): u opent het via de wifi van thuis, door een QR-code te scannen.
+### Android (zelfstandige app)
 
-Alles gebeurt bij u thuis. Berichten en foto's gaan niet naar het internet en worden niet bewaard.
+De app bevat alles: regels, foto's lezen, stem. Ze werkt zonder computer en zonder internet.
 
-## Installatie
+1. Op GitHub: tabblad **Actions**, laatste uitvoering **Application Android**, onderdeel **Artifacts**, en download **Vigie-android**.
+2. Open `Vigie-android.apk` op de telefoon. Android vraagt om installatie uit deze bron toe te staan: accepteer dit voor nu.
+3. Open Vigie. De camera wordt pas gevraagd wanneer u op "Prendre en photo" (foto nemen) tikt.
 
-Kies uw systeem. Elke stap doet u maar één keer.
-
-### Linux Fedora (het eenvoudigst)
-
-1. Download Vigie: groene knop **Code** → **Download ZIP**, en pak het bestand uit.
-2. Open een terminal in de map van Vigie.
-3. Typ:
-   ```bash
-   bash installer_fedora.sh
-   ```
-   Op een oude computer of een computer met weinig geheugen typt u beter `bash installer_fedora.sh --sans-ia`.
-
-### Linux Ubuntu of Debian
+### Computer met Fedora (en andere Linux)
 
 ```bash
-sudo apt install tesseract-ocr tesseract-ocr-fra python3-pip
-python3 -m pip install --user -r requirements.txt
+git clone https://github.com/asblPixels/vigie.git ~/vigie && cd ~/vigie
+bash installer_fedora.sh      # installeert Python, Tesseract (Frans) en de afhankelijkheden
+python3 app.py                # open daarna http://127.0.0.1:5000
 ```
 
-### Windows 10 of 11
-
-1. Installeer **Python** via [python.org](https://www.python.org/downloads/). Vink **„Add Python to PATH”** aan.
-2. Installeer **Tesseract** (om foto's te lezen) via [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki). Vink tijdens de installatie de taal **French** aan.
-3. Open **PowerShell** in de map van Vigie en typ:
-   ```powershell
-   py -m pip install -r requirements.txt
-   ```
-
-### macOS
-
-Met [Homebrew](https://brew.sh):
+### iPhone, of een telefoon naast de pc
 
 ```bash
-brew install tesseract tesseract-lang python
-python3 -m pip install -r requirements.txt
+python3 app.py --telephone    # toont een adres en een QR-code om te scannen (zelfde wifi)
 ```
 
-### Lokale AI (optioneel)
+Open het adres in Safari en kies "Zet op beginscherm". Een native iPhone-app bestaat nog niet (zie de routekaart).
 
-De AI legt het resultaat uit in eenvoudige woorden. Daarvoor is een computer met **8 GB geheugen** nodig.
+## Uw vertrouwenspersoon
 
-1. Installeer [Ollama](https://ollama.com/download).
-2. Typ: `ollama pull qwen2.5:3b`
+Vigie stelt nooit voor een nummer te bellen dat ze zelf voor u koos. Via **Réglages → Ma personne de confiance** kiest u een contact uit uw adresboek of typt u een nummer in. Het wordt alleen op uw toestel bewaard.
 
-Zonder AI werkt Vigie ook: het oordeel hangt er nooit van af.
+Op Android verloopt de keuze via de contactkiezer van het systeem: Vigie ontvangt alleen het gekozen contact en heeft **geen** toestemming om uw adresboek te lezen.
 
-## Gebruik
+## Privacy
 
-### Op de computer
+| Gegeven | Waar het naartoe gaat |
+|---|---|
+| Tekst van het bericht | Op het toestel geanalyseerd, nooit verstuurd |
+| Foto | Op het toestel gelezen; Vigie bewaart er geen kopie van |
+| Vertrouwenspersoon | Alleen op het toestel bewaard |
+| Statistieken, cookies, accounts | Geen |
+
+De Android-app dwingt bovendien een beveiligingsbeleid (CSP) af dat het laden van externe inhoud verbiedt, en bevat geen trackers.
+
+## Onder de motorkap
+
+| Onderdeel | Technologie |
+|---|---|
+| Detectie | Leesbare regels: officiële merken en domeinen, linkverkorters, verdachte extensies, drukkende woordkeuze (`regles.py`) |
+| Overal dezelfde uitspraak | De regels worden naar de telefoon geëxporteerd (`regles.json`); `outils/verifier_parite.py` bewijst dat pc en Android identiek antwoorden |
+| Foto's lezen | Tesseract (pc) · ingebouwde Tesseract.js met Franse taaldata (Android) |
+| Android-app | Capacitor 8, native contactkiezer, spraaksynthese |
+| Interface | Eén stijlblad voor pc en Android, licht en donker thema, lettertype Atkinson Hyperlegible Next |
+| Optionele AI (pc) | Lokale Ollama (`qwen2.5:3b`): licht toe, beslist nooit |
+
+## Ontwikkelen
 
 ```bash
-python3 app.py
+python3 test_vigie.py                 # 11 voorbeeldberichten
+python3 outils/verifier_parite.py     # pc en telefoon geven dezelfde uitspraak
+python3 outils/exporter_regles.py     # na elke wijziging van regles.py
+python3 outils/generer_logos.py       # logo's in licht en donker
+
+cd mobile && npm ci && npm run sync   # bereidt de Android-app voor
 ```
 
-Onder Windows: `py app.py`. Vindt Windows Tesseract niet, typ dan eerst:
-`$env:VIGIE_TESSERACT = "C:\Program Files\Tesseract-OCR\tesseract.exe"`
+De APK wordt door GitHub Actions gebouwd (`.github/workflows/android.yml`) bij elke wijziging en aan een release gekoppeld wanneer een `v…`-label wordt gepusht.
 
-Open daarna **http://127.0.0.1:5000** in de browser.
+## Routekaart
 
-### Op een iPhone, iPad of Android
+- [x] Pc-prototype, nieuw ontwerp, camera op iOS en Android
+- [x] Zelfstandige Android-app (regels, foto's lezen, stem, vertrouwenspersoon)
+- [ ] Test op echte toestellen en ondertekening van de APK voor verspreiding
+- [ ] iPhone-app
+- [ ] Interface in het Nederlands, Italiaans en Duits
+- [ ] Regels aanvullen met recente Belgische oplichtingscampagnes
 
-1. De gsm en de computer moeten op **dezelfde wifi** zitten.
-2. Typ op de computer: `python3 app.py --telephone`
-3. Er verschijnt een **QR-code**. Richt de camera van uw gsm erop en open de link.
-4. Tip: zet Vigie op uw beginscherm.
-   - **iPhone / iPad** (Safari): knop Delen → **Zet op beginscherm**.
-   - **Android** (Chrome): menu ⋮ → **Toevoegen aan startscherm**.
+## Wie zit achter Vigie
 
-### Een bericht controleren
+Vigie is vrije software waarvan het **concept is bedacht door Pixel's ASBL** (Boussu, België), een vereniging die mensen begeleidt in hun digitale leven. Pixel's ASBL ontvangt geen enkel geanalyseerd bericht en biedt geen bijstand via de app. Voor een vraag over het project zelf: Info@asblpixels.be.
 
-- **Prendre en photo** (foto nemen): de camera gaat open. Fotografeer het scherm of de brief, ook als die van iemand anders is. Het resultaat verschijnt vanzelf.
-- **Capture d'écran** (schermafbeelding): kies een afbeelding die al op uw toestel staat.
-- **Coller** (plakken): plak de tekst van het bericht en druk op **Vérifier le message** (bericht controleren).
+Vigie steunt op [Tesseract](https://github.com/tesseract-ocr/tesseract) en [Tesseract.js](https://github.com/naptha/tesseract.js) (Apache-2.0), [Capacitor](https://capacitorjs.com) (MIT), [Flask](https://flask.palletsprojects.com) (BSD-3) en het lettertype [Atkinson Hyperlegible Next](https://brailleinstitute.org/freefont) van het Braille Institute (SIL OFL 1.1).
 
-## Instellingen
+## Bijdragen en problemen melden
 
-U kunt de persoon die gebeld wordt aanpassen, bijvoorbeeld naar een familielid:
+Zie [CONTRIBUTING.md](CONTRIBUTING.md) en [SECURITY.md](SECURITY.md). Wordt een oplichting niet herkend? Open een ticket met de tekst van het bericht, **zonder** persoonsgegevens.
 
-```bash
-VIGIE_AIDANT_NOM="Mijn dochter Julie" VIGIE_AIDANT_TEL="+32470000000" python3 app.py
-```
+## Licentie
 
-| Instelling | Waarvoor dient het | Standaard |
-| --- | --- | --- |
-| `VIGIE_AIDANT_NOM` | Naam op de belknop | Pixel's ASBL |
-| `VIGIE_AIDANT_TEL` | Nummer dat gebeld wordt | +32456960328 |
-| `VIGIE_MODELE` | AI-model | qwen2.5:3b |
-| `VIGIE_OLLAMA` | Adres van de AI | http://127.0.0.1:11434 |
-| `VIGIE_TESSERACT` | Locatie van Tesseract | tesseract |
-| `VIGIE_HOTE` | `0.0.0.0` voor het netwerk thuis | 127.0.0.1 |
-| `VIGIE_PORT` | Poort | 5000 |
-
-## Bij problemen
-
-| Probleem | Oplossing |
-| --- | --- |
-| De gsm opent de pagina niet | Dezelfde wifi? Computer aan? Onder Fedora: `sudo firewall-cmd --add-port=5000/tcp` |
-| „Je n'ai pas réussi à lire l'image” (afbeelding niet gelezen) | Neem de foto opnieuw, recht van voren, goed verlicht, zonder weerspiegeling. Of plak de tekst. |
-| Geen uitleg van de AI | Ollama draait niet: geen probleem, het oordeel blijft betrouwbaar. |
-| „Vigie n'est pas joignable” (niet bereikbaar) | De computer staat uit, of de gsm zit niet meer op de wifi van thuis. |
-
-## Nuttige nummers (België)
-
-- U hebt een code of uw kaartgegevens gegeven: **Card Stop 078 170 170**, daarna uw bank.
-- Stuur verdachte berichten door naar **verdacht@safeonweb.be**.
-- Noodnummer politie: **101**.
-
-## Veiligheid en privacy
-
-- Alles werkt **op uw computer**. Foto's worden meteen na het lezen gewist.
-- Met `--telephone` kan iedereen op **dezelfde wifi** Vigie openen. Gebruik dit thuis, nooit op een openbare wifi.
-- Vigie is **een hulpmiddel, geen garantie**. Bij twijfel: doe niets en bel een vertrouwenspersoon.
-
-## Voor technici
-
-- `app.py`: webtoepassing (Flask), foto's lezen, AI, PWA.
-- `regles.py`: regels tegen oplichting en officiële Belgische domeinen. **Alleen deze regels bepalen het oordeel**: 5 punten of meer geeft rood, 2 tot 4 geeft oranje.
-- `test_vigie.py`: tests (`python3 test_vigie.py`). Voeg elke nieuwe vorm van oplichting toe (geanonimiseerd), en ook echte, betrouwbare berichten.
-- Foto's: de gsm verkleint ze (ongeveer 70 kB), de computer zet ze recht, verwerkt de donkere modus en leest ze met Tesseract.
-- Vigie installeren als echte app op de gsm (ook offline) vraagt een **HTTPS**-verbinding. Dat komt voor de openbare versie.
-
-**Kleuren van Pixel's:** nachtblauw `#0E2A38` · turkoois `#008080` · mint `#5EEAD4`. Logo: `static/logo.svg`.
-
-## Licentie en contact
-
-Vrije software onder licentie **GPL-3.0** (zie [LICENSE](LICENSE)).
-
-**Pixel's ASBL** · Rue Alfred Dendal 56, 7300 Boussu · info@asblpixels.be · +32 456 96 03 28
+[GPL-3.0-or-later](LICENSE) · © Pixel's ASBL

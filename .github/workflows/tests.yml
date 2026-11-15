@@ -1,0 +1,23 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  regles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Tests des règles anti-arnaque
+        run: python3 test_vigie.py
+      - name: Même verdict sur PC et sur téléphone
+        run: python3 outils/verifier_parite.py
+      - name: Règles exportées à jour
+        run: |
+          python3 outils/exporter_regles.py
+          git diff --exit-code mobile/www/regles.json

@@ -1,0 +1,22 @@
+{
+  "name": "vigie-mobile",
+  "version": "0.1.0",
+  "description": "Vigie — application Android autonome (Pixel's ASBL)",
+  "scripts": {
+    "preparer": "node scripts/preparer.js",
+    "sync": "npm run preparer && cap sync android",
+    "test": "node scripts/tester.js"
+  },
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
+  },
+  "dependencies": {
+    "@capacitor-community/text-to-speech": "^8.0.2",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@tesseract.js-data/fra": "^1.0.0",
+    "tesseract.js": "^6.0.1"
+  },
+  "private": true
+}

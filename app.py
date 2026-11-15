@@ -4,8 +4,8 @@ Lancement :  python3 app.py   puis ouvrir http://127.0.0.1:5000
 Tout reste sur l'ordinateur : OCR avec Tesseract, explication avec Ollama (facultatif).
 
 Configuration (variables d'environnement, toutes facultatives) :
-  VIGIE_AIDANT_NOM   nom de l'aidant          (défaut : « Pixel's ASBL »)
-  VIGIE_AIDANT_TEL   téléphone de l'aidant    (défaut : +32456960328)
+  VIGIE_AIDANT_NOM   nom de la personne de confiance        (facultatif, aucune valeur par défaut)
+  VIGIE_AIDANT_TEL   téléphone de la personne de confiance  (facultatif, aucune valeur par défaut)
   VIGIE_MODELE       modèle Ollama            (défaut : qwen2.5:3b)
   VIGIE_OLLAMA       adresse d'Ollama         (défaut : http://127.0.0.1:11434)
   VIGIE_HOTE         adresse d'écoute         (défaut : 127.0.0.1 ; 0.0.0.0 = accès smartphone)
@@ -34,8 +34,8 @@ try:  # facultatif : améliore la lecture des photos prises au téléphone
 except ImportError:
     Image = None
 
-AIDANT_NOM = os.environ.get("VIGIE_AIDANT_NOM", "Pixel's ASBL")
-AIDANT_TEL = os.environ.get("VIGIE_AIDANT_TEL", "+32456960328")
+AIDANT_NOM = os.environ.get("VIGIE_AIDANT_NOM", "")
+AIDANT_TEL = os.environ.get("VIGIE_AIDANT_TEL", "")
 MODELE = os.environ.get("VIGIE_MODELE", "qwen2.5:3b")
 OLLAMA = os.environ.get("VIGIE_OLLAMA", "http://127.0.0.1:11434")
 TESSERACT = os.environ.get("VIGIE_TESSERACT", "tesseract")  # Windows : chemin complet de tesseract.exe
@@ -153,8 +153,8 @@ MANIFESTE = {
 }
 
 # Service worker : rend l'app installable et affiche un message clair si le PC n'est pas joignable.
-SERVICE_WORKER = """const CACHE='vigie-v1';
-const FICHIERS=['/hors-ligne','/static/logo-icone.svg','/static/icone-192.png'];
+SERVICE_WORKER = """const CACHE='vigie-v3';
+const FICHIERS=['/hors-ligne','/static/logo-icone.svg','/static/logo-icone-sombre.svg','/static/icone-192.png','/static/vigie.css'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FICHIERS)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==CACHE).map(n=>caches.delete(n)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{
@@ -164,7 +164,7 @@ self.addEventListener('fetch',e=>{
 
 HORS_LIGNE = """<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>Vigie — hors ligne</title>
-<style>body{margin:0;font-family:Cantarell,'Noto Sans',system-ui,sans-serif;font-size:20px;line-height:1.5;background:#F3F6F7;color:#0E2A38;border-top:6px solid #008080}
+<style>body{margin:0;font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',Cantarell,'Noto Sans',system-ui,sans-serif;font-size:20px;line-height:1.5;background:#F2F5F6;color:#0E2A38;border-top:5px solid #007A7A}
 main{max-width:560px;margin:0 auto;padding:40px 20px;text-align:center}img{width:88px;height:88px}h1{font-size:28px}
 a{display:block;margin-top:24px;padding:18px;border-radius:12px;background:#0E2A38;color:#fff;font-weight:700;text-decoration:none}</style></head>
 <body><main><img src="/static/logo-icone.svg" alt=""><h1>Vigie n'est pas joignable</h1>
@@ -207,106 +207,7 @@ PAGE = """<!doctype html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Vigie">
 <title>{% if resultat %}Résultat — {% endif %}Vigie</title>
-<style>
-:root{
-  /* Couleurs Pixel's ASBL : bleu nuit, turquoise, menthe (touche) */
-  --nuit:#0E2A38; --turquoise:#008080; --turquoise-fonce:#006B6B; --menthe:#5EEAD4; --turquoise-pale:#E6F4F4;
-  --bg:#F3F6F7; --surface:#fff; --ink:#0E2A38; --muted:#4A5B66; --line:#D5DEE2;
-  --brand:var(--nuit); --brand-ink:#fff; --focus:var(--turquoise);
-  --call:var(--turquoise-fonce); --call-hover:#005858;
-  --rouge:#b42318; --rouge-bg:#fef3f2; --rouge-line:#f4c7c3;
-  --orange:#a14b00; --orange-bg:#fff8eb; --orange-line:#f5d9a8;
-  --vert:#067647; --vert-bg:#ecfdf3; --vert-line:#b6e8cb;
-  --radius:16px; --shadow:0 1px 2px rgba(17,24,39,.06),0 4px 16px rgba(17,24,39,.06);
-}
-*{box-sizing:border-box}
-html{font-size:20px}
-body{margin:0;border-top:6px solid var(--nuit);border-image:linear-gradient(90deg,var(--nuit),var(--turquoise) 70%,var(--menthe)) 1;background:var(--bg);color:var(--ink);font-family:"Cantarell","Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
-.page{max-width:640px;margin:0 auto;padding:0 20px 40px}
-/* En-tête : discret, toujours le même */
-.entete{display:flex;align-items:center;justify-content:space-between;padding:18px 0 22px}
-.marque{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
-.marque img{width:40px;height:40px;border-radius:10px;display:block}
-.marque b{font-size:1.15rem;letter-spacing:-.01em}
-.marque small{display:block;font-size:.7rem;color:var(--turquoise-fonce);font-weight:600;line-height:1.1}
-.aide{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:2px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;font-weight:600;font-size:.85rem;background:var(--surface)}
-.aide svg{width:20px;height:20px;color:var(--turquoise)}
-/* Titres */
-h1{font-size:1.6rem;line-height:1.2;margin:0 0 8px;letter-spacing:-.02em}
-.intro{color:var(--muted);margin:0 0 24px}
-/* Carte */
-.carte{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:16px}
-label.titre{display:block;font-weight:700;margin-bottom:10px}
-textarea{width:100%;min-height:180px;font:inherit;font-size:1rem;padding:16px;border:2px solid var(--line);border-radius:12px;background:#fbfbfc;color:var(--ink);resize:vertical}
-textarea::placeholder{color:#8a919c}
-.outils{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-/* Boutons */
-.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;padding:14px 20px;border-radius:12px;font:inherit;font-weight:700;font-size:1rem;text-decoration:none;cursor:pointer;border:2px solid transparent;transition:background .15s,border-color .15s}
-.btn svg{width:24px;height:24px;flex:none}
-.btn-principal{background:var(--brand);color:var(--brand-ink);font-size:1.1rem;min-height:68px;margin-top:20px}
-.btn-principal:hover{background:#17394B}
-.btn-secondaire{background:var(--surface);color:var(--ink);border-color:var(--line)}
-.btn-secondaire:hover{border-color:#9aa3af}
-.btn-appel{background:var(--call);color:#fff;font-size:1.1rem;min-height:68px}
-.btn-appel:hover{background:var(--call-hover)}
-.btn[disabled]{opacity:.75;cursor:wait}
-:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
-input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
-.photo-choisie{display:none;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;background:var(--turquoise-pale);border-radius:10px;font-size:.85rem}
-.photo-choisie.visible{display:flex}
-.photo-choisie span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.photo-choisie button{border:0;background:none;font:inherit;font-weight:700;color:var(--turquoise-fonce);cursor:pointer;padding:4px 8px}
-.photo-choisie img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:#dfe4ea;flex:none}
-.btn-camera{background:var(--turquoise-pale);color:var(--turquoise-fonce);border-color:#9FD2D2;min-height:64px}
-.btn-camera:hover{border-color:var(--turquoise)}
-.aide-photo{margin:8px 2px 0;font-size:.8rem;color:var(--muted);text-align:center}
-.ou{display:flex;align-items:center;gap:12px;margin:20px 0 14px;color:var(--muted);font-size:.85rem}
-.ou::before,.ou::after{content:"";flex:1;height:1px;background:var(--line)}
-@media (max-width:640px){textarea{min-height:130px}}
-.alerte{display:flex;gap:12px;padding:14px 16px;border-radius:12px;background:var(--orange-bg);border:2px solid var(--orange-line);margin-bottom:16px;font-size:.9rem}
-.alerte svg{width:24px;height:24px;flex:none;color:var(--orange)}
-/* Verdict */
-.verdict{border-radius:var(--radius);padding:28px 24px;margin-bottom:16px;border:2px solid}
-.verdict.rouge{background:var(--rouge-bg);border-color:var(--rouge-line)}
-.verdict.orange{background:var(--orange-bg);border-color:var(--orange-line)}
-.verdict.vert{background:var(--vert-bg);border-color:var(--vert-line)}
-.verdict-tete{display:flex;align-items:center;gap:16px}
-.verdict-tete svg{width:56px;height:56px;flex:none}
-.rouge .verdict-tete svg{color:var(--rouge)} .orange .verdict-tete svg{color:var(--orange)} .vert .verdict-tete svg{color:var(--vert)}
-.verdict-etiquette{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-.rouge .verdict-etiquette{color:var(--rouge)} .orange .verdict-etiquette{color:var(--orange)} .vert .verdict-etiquette{color:var(--vert)}
-.verdict h1{margin:2px 0 0;font-size:1.5rem}
-.verdict p{margin:14px 0 0;font-size:1rem}
-/* Étapes */
-h2{font-size:1.15rem;margin:0 0 16px}
-ol.etapes{list-style:none;margin:0;padding:0;counter-reset:e}
-ol.etapes li{counter-increment:e;display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid #eef0f3}
-ol.etapes li:first-child{border-top:0;padding-top:0}
-ol.etapes li::before{content:counter(e);flex:none;width:36px;height:36px;border-radius:50%;background:var(--turquoise-fonce);color:#fff;font-weight:700;display:grid;place-items:center;font-size:.9rem;margin-top:1px}
-.encadre{margin-top:16px;padding:14px 16px;border-radius:12px;background:#f3f4f6;font-size:.9rem}
-.encadre p{margin:0}.encadre p+p{margin-top:8px}
-/* Détails repliables */
-details{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px}
-summary{list-style:none;cursor:pointer;padding:20px 24px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:12px}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"";width:12px;height:12px;border-right:3px solid var(--muted);border-bottom:3px solid var(--muted);transform:rotate(45deg);margin-top:-6px;flex:none;transition:transform .15s}
-details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
-.details-corps{padding:0 24px 22px;font-size:.92rem}
-.details-corps ul{margin:0;padding-left:22px}.details-corps li{margin:8px 0}
-.ia{margin:0 0 14px;padding-left:14px;border-left:4px solid var(--line);color:var(--muted);white-space:pre-line}
-.message-brut{white-space:pre-wrap;word-break:break-word;background:#f7f8fa;border-radius:10px;padding:14px;font-size:.85rem;color:var(--muted);margin:0}
-.actions{display:grid;gap:12px;margin:8px 0 16px}
-.actions-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-/* Pied de page */
-.pied{margin-top:28px;text-align:center;color:var(--muted);font-size:.78rem}
-.pied p{margin:4px 0}
-.pied details{background:none;box-shadow:none;margin:10px 0 0}
-.pied summary{justify-content:center;padding:8px;font-weight:600}
-.pied summary::after{width:8px;height:8px;border-width:2px}
-.numeros{list-style:none;padding:0;margin:4px 0 0}.numeros li{margin:4px 0}
-@media (max-width:420px){html{font-size:19px}.carte,.verdict{padding:20px}.outils,.actions-duo{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-</style></head><body>
+<link rel="stylesheet" href="/static/vigie.css"></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
  <symbol id="i-bouclier" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
  <symbol id="i-tel" viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1L6.6 10.8Z"/></symbol>
@@ -320,17 +221,15 @@ details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
  <symbol id="i-retour" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 12H5m6-6-6 6 6 6"/></symbol>
 </defs></svg>
 
-<div class="page">
-<header class="entete">
+<header class="bandeau"><div class="bandeau-int">
   <a class="marque" href="/" aria-label="Vigie, accueil">
-    <img src="/static/logo-icone.svg" alt="" width="40" height="40">
+    <picture><source media="(prefers-color-scheme: dark)" srcset="/static/logo-icone-sombre.svg"><img src="/static/logo-icone.svg" alt="" width="44" height="44"></picture>
     <span><b>Vigie</b><small>par Pixel's ASBL</small></span>
   </a>
-  {% if not resultat or resultat.verdict == 'vert' %}
-  <a class="aide" href="tel:{{ aidant_tel }}"><svg aria-hidden="true"><use href="#i-tel"/></svg>Besoin d'aide ?</a>
-  {% endif %}
-</header>
+  <a class="aide" id="aide-haut" href="#" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg><span>Ma personne de confiance</span></a>
+</div></header>
 
+<div class="page">
 <main>
 {% if resultat %}
   {# ---------- ÉCRAN RÉSULTAT : verdict, puis quoi faire, puis détails ---------- #}
@@ -355,8 +254,9 @@ details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
   </section>
 
   {% if resultat.verdict != 'vert' %}
-  <div class="actions">
-    <a class="btn btn-appel" href="tel:{{ aidant_tel }}"><svg aria-hidden="true"><use href="#i-tel"/></svg>Appeler {{ aidant_nom }}</a>
+  <div class="actions" id="zone-aidant">
+    <a class="btn btn-appel" id="appel" href="#" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg><span></span></a>
+    <button class="btn btn-camera" type="button" id="choisir-aidant" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg>Choisir ma personne de confiance</button>
   </div>
   {% endif %}
 
@@ -390,6 +290,7 @@ details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
 
 {% else %}
   {# ---------- ÉCRAN D'ACCUEIL : une seule tâche ---------- #}
+  <span class="surtitre">Vérification anti-arnaque</span>
   <h1>Un message vous inquiète ?</h1>
   <p class="intro">Collez-le, ou prenez-le en photo avec votre téléphone. Vigie vous dit s'il est dangereux et quoi faire.</p>
 
@@ -416,7 +317,19 @@ details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
 </main>
 
 <footer class="pied">
-  <p>Rien n'est envoyé sur Internet. Vigie est une aide, pas une garantie.</p>
+  <p class="signature"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/logo-icone-sombre.svg"><img src="/static/logo-icone.svg" alt=""></picture>Vigie · logiciel libre conçu par Pixel's ASBL, Boussu</p>
+  <p>Gratuit, sans compte, sans publicité. Rien n'est envoyé sur Internet. Vigie est une aide, pas une garantie.</p>
+  <p>Logiciel libre conçu par Pixel's ASBL (Boussu). Pixel's ASBL ne reçoit aucun message et n'assure pas d'assistance par cette application.</p>
+  <details id="panneau-aidant">
+    <summary>Ma personne de confiance</summary>
+    <div class="details-corps">
+      <p>En cas de doute, Vigie vous propose d'appeler la personne que <b>vous</b> choisissez : un proche, un voisin… Son numéro reste sur cet appareil.</p>
+      <button class="btn btn-camera" type="button" id="aidant-contacts" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg>Choisir dans mes contacts</button>
+      <label class="champ"><span>Nom</span><input id="aidant-nom" autocomplete="off" maxlength="40"></label>
+      <label class="champ"><span>Numéro de téléphone</span><input id="aidant-tel" type="tel" inputmode="tel" autocomplete="off" maxlength="20"></label>
+      <div class="actions-duo"><button class="btn btn-principal" type="button" id="aidant-enregistrer" style="margin-top:0">Enregistrer</button><button class="btn btn-secondaire" type="button" id="aidant-retirer">Retirer</button></div>
+    </div>
+  </details>
   <details>
     <summary>Numéros utiles</summary>
     <ul class="numeros">
@@ -485,10 +398,48 @@ details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
     }).catch(function(){ f.submit(); });
   });
 })();
+{{ js_aidant|safe }}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
 function lire(){try{var z=document.getElementById('reponse').innerText+'. '+document.querySelector('ol.etapes').innerText;var u=new SpeechSynthesisUtterance(z);u.lang='fr-BE';u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 </script>
 </body></html>"""
+
+JS_AIDANT = r"""
+(function(){
+  var DEF={nom:__NOM__,tel:__TEL__}; // facultatif : préréglage posé par la personne qui installe Vigie pour un proche
+  function lire_(){try{var a=JSON.parse(localStorage.getItem('vigie.aidant'));if(a&&a.tel)return a;}catch(e){}return DEF.tel?DEF:null;}
+  function nettoyer(t){return String(t||'').replace(/[^+\d]/g,'');}
+  var haut=document.getElementById('aide-haut'),appel=document.getElementById('appel'),choisir=document.getElementById('choisir-aidant');
+  function afficher(){
+    var a=lire_();
+    if(haut){if(a){haut.hidden=false;haut.href='tel:'+nettoyer(a.tel);haut.lastChild.textContent='Appeler '+a.nom;}else{haut.hidden=true;}}
+    if(appel&&choisir){appel.hidden=!a;choisir.hidden=!!a;if(a){appel.href='tel:'+nettoyer(a.tel);appel.lastChild.textContent='Appeler '+a.nom;}}
+  }
+  var pn=document.getElementById('panneau-aidant'),nom=document.getElementById('aidant-nom'),tel=document.getElementById('aidant-tel'),btnC=document.getElementById('aidant-contacts');
+  function ouvrir(){if(!pn)return;var a=lire_();nom.value=a?a.nom:'';tel.value=a?a.tel:'';pn.open=true;pn.scrollIntoView({behavior:'smooth',block:'center'});}
+  if(choisir)choisir.addEventListener('click',ouvrir);
+  if(navigator.contacts&&navigator.contacts.select&&btnC){
+    btnC.hidden=false;
+    btnC.addEventListener('click',function(){
+      navigator.contacts.select(['name','tel'],{multiple:false}).then(function(r){
+        if(r&&r[0]){nom.value=(r[0].name&&r[0].name[0])||'';tel.value=(r[0].tel&&r[0].tel[0])||'';}
+      }).catch(function(){});
+    });
+  }
+  if(pn){
+    pn.addEventListener('toggle',function(){if(pn.open){var a=lire_();if(!nom.value&&!tel.value&&a){nom.value=a.nom;tel.value=a.tel;}}});
+    document.getElementById('aidant-enregistrer').addEventListener('click',function(){
+      if(!/^\+?[\d\s().-]{6,20}$/.test(tel.value.trim())){tel.focus();return;}
+      try{localStorage.setItem('vigie.aidant',JSON.stringify({nom:nom.value.trim()||'mon contact',tel:tel.value.trim()}));}catch(e){}
+      afficher();pn.open=false;
+    });
+    document.getElementById('aidant-retirer').addEventListener('click',function(){try{localStorage.removeItem('vigie.aidant');}catch(e){}nom.value='';tel.value='';afficher();});
+  }
+  afficher();
+})();
+"""
+JS_AIDANT = JS_AIDANT.replace("__NOM__", json.dumps(AIDANT_NOM)).replace("__TEL__", json.dumps(AIDANT_TEL))
+PAGE = PAGE.replace("{{ js_aidant|safe }}", JS_AIDANT)
 
 def adresse_locale() -> str:
     """Adresse du PC sur le Wi-Fi (aucun paquet n'est envoyé)."""

@@ -1,0 +1,12 @@
+name: Problème dans l'application
+description: Quelque chose ne marche pas ou n'est pas clair
+labels: [bug]
+body:
+  - type: dropdown
+    id: appareil
+    attributes: { label: Appareil, options: [Android, iPhone (page web), PC Linux, Autre] }
+    validations: { required: true }
+  - type: textarea
+    id: quoi
+    attributes: { label: Que s'est-il passé ?, description: Ce que vous avez fait, ce que vous attendiez, ce qui est arrivé }
+    validations: { required: true }

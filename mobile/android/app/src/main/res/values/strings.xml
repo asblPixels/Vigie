@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vigie</string>
+    <string name="title_activity_main">Vigie</string>
+    <string name="package_name">be.asblpixels.vigie</string>
+    <string name="custom_url_scheme">be.asblpixels.vigie</string>
+</resources>

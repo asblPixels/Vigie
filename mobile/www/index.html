@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' blob: data:">
+<title>Vigie</title>
+<link rel="stylesheet" href="vigie.css"><link rel="stylesheet" href="app.css">
+</head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+ <symbol id="i-bouclier" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+ <symbol id="i-tel" viewBox="0 0 24 24"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1L6.6 10.8Z"/></symbol>
+ <symbol id="i-coller" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4" stroke-linecap="round"/></g></symbol>
+ <symbol id="i-photo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></g></symbol>
+ <symbol id="i-galerie" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m4.5 18 5-5 3.5 3.5 2.5-2.5 4 4" stroke-linecap="round"/></g></symbol>
+ <symbol id="i-danger" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="m9.5 9.5 5 5m0-5-5 5"/></symbol>
+ <symbol id="i-attention" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3.5 2.5 20h19L12 3.5Z"/><path stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 10v4.5M12 17.2v.1"/></symbol>
+ <symbol id="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m8 12.5 2.8 2.8L16.5 9.5"/></symbol>
+ <symbol id="i-son" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4Z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></g></symbol>
+ <symbol id="i-retour" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 12H5m6-6-6 6 6 6"/></symbol>
+</defs></svg>
+<header class="bandeau"><div class="bandeau-int">
+  <a class="marque" href="#accueil" aria-label="Vigie, accueil">
+    <picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt="" width="44" height="44"></picture>
+    <span><b>Vigie</b><small>par Pixel's ASBL</small></span>
+  </a>
+  <a class="aide" id="aide-haut" href="#" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg><span></span></a>
+</div></header>
+
+<div class="page"><main>
+
+<section class="vue active" id="vue-accueil">
+  <span class="surtitre">Vérification anti-arnaque</span>
+  <h1>Un message vous inquiète ?</h1>
+  <p class="intro">Prenez-le en photo ou collez-le. Vigie vous dit s'il est dangereux et quoi faire. Tout reste sur ce téléphone.</p>
+  <div class="alerte" id="erreur" role="alert" hidden><svg aria-hidden="true"><use href="#i-attention"/></svg><span id="erreur-texte"></span></div>
+  <form class="carte" id="formulaire" novalidate>
+    <label class="btn btn-camera" for="camera"><svg aria-hidden="true"><use href="#i-photo"/></svg>Prendre en photo</label>
+    <input type="file" id="camera" accept="image/*" capture="environment">
+    <p class="aide-photo">Photographiez l'écran ou le courrier, même s'il appartient à quelqu'un d'autre.</p>
+    <div class="ou"><span>ou</span></div>
+    <label class="titre" for="texte">Collez le texte du message</label>
+    <textarea id="texte" placeholder="Exemple : « Votre colis est en attente, payez 1,99 € ici… »"></textarea>
+    <div class="outils">
+      <button class="btn btn-secondaire" type="button" id="coller"><svg aria-hidden="true"><use href="#i-coller"/></svg>Coller</button>
+      <label class="btn btn-secondaire" for="galerie"><svg aria-hidden="true"><use href="#i-galerie"/></svg>Capture d'écran</label>
+      <input type="file" id="galerie" accept="image/*">
+    </div>
+    <button class="btn btn-principal" type="submit" id="verifier"><svg aria-hidden="true"><use href="#i-bouclier"/></svg>Vérifier le message</button>
+  </form>
+</section>
+
+<section class="vue" id="vue-lecture" aria-live="polite">
+  <div class="chargement">
+    <picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt="" width="96" height="96"></picture>
+    <h1 id="lecture-titre">Lecture de la photo…</h1>
+    <p class="intro" id="lecture-detail">Cela peut prendre une vingtaine de secondes. Rien ne quitte ce téléphone.</p>
+    <div class="barre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barre"><span id="barre-int"></span></div>
+  </div>
+</section>
+
+<section class="vue" id="vue-resultat"></section>
+
+<section class="vue" id="vue-reglages">
+  <span class="surtitre">Réglages</span>
+  <h1>Ma personne de confiance</h1>
+  <p class="intro">En cas de doute, Vigie vous propose de l'appeler. Choisissez-la vous-même : un proche, un voisin, un ami. Son numéro reste sur ce téléphone, et Vigie ne lit pas votre répertoire.</p>
+  <div class="alerte" id="erreur-reglages" role="alert" hidden><svg aria-hidden="true"><use href="#i-attention"/></svg><span id="erreur-reglages-texte"></span></div>
+  <div class="carte">
+    <div id="aidant-actuel" class="aidant-actuel" hidden><span class="surtitre">Personne choisie</span><p><b id="aidant-actuel-nom"></b><br><span id="aidant-actuel-tel"></span></p></div>
+    <button class="btn btn-camera" type="button" id="aidant-contacts"><svg aria-hidden="true"><use href="#i-tel"/></svg>Choisir dans mes contacts</button>
+    <details class="saisie">
+      <summary>Saisir un numéro à la main</summary>
+      <form id="form-reglages">
+        <label class="champ"><span>Nom</span><input id="aidant-nom" autocomplete="off" maxlength="40"></label>
+        <label class="champ"><span>Numéro de téléphone</span><input id="aidant-tel" type="tel" inputmode="tel" autocomplete="off" maxlength="20"></label>
+        <button class="btn btn-secondaire" type="submit">Enregistrer</button>
+      </form>
+    </details>
+    <button class="btn btn-secondaire" type="button" id="aidant-retirer" hidden style="margin-top:12px">Retirer cette personne</button>
+  </div>
+</section>
+
+</main>
+<footer class="pied">
+  <p class="signature"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt=""></picture>Vigie · logiciel libre conçu par Pixel's ASBL, Boussu</p>
+  <p>Gratuit, sans compte, sans publicité. Aucune donnée n'est envoyée sur Internet. Vigie est une aide, pas une garantie.</p>
+  <p>Logiciel libre conçu par Pixel's ASBL (Boussu). Pixel's ASBL ne reçoit aucun message et n'assure pas d'assistance par cette application.</p>
+  <details>
+    <summary>Numéros utiles</summary>
+    <ul class="numeros">
+      <li>Carte ou code bancaire donné : <b>Card Stop 078 170 170</b></li>
+      <li>Message suspect : <b>suspect@safeonweb.be</b></li>
+      <li>Urgence police : <b>101</b></li>
+    </ul>
+  </details>
+  <p><button class="lien-discret" type="button" id="ouvrir-reglages">Ma personne de confiance</button></p>
+  <p class="note">Version <span id="version">0.1</span> · logiciel libre GPL-3.0</p>
+</footer></div>
+
+<script src="regles.js"></script>
+<script src="ocr/tesseract.min.js"></script>
+<script src="app.js"></script>
+</body></html>

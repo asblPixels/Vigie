@@ -1,0 +1,6 @@
+{
+  "appId": "be.asblpixels.vigie",
+  "appName": "Vigie",
+  "webDir": "www",
+  "android": { "backgroundColor": "#F2F5F6", "allowMixedContent": false }
+}

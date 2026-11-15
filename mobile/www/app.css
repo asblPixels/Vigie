@@ -1,0 +1,22 @@
+/* Vigie (application Android) — compléments à vigie.css : vues, lecture de la photo, réglages. */
+html,body{overscroll-behavior:none}
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);-webkit-tap-highlight-color:transparent}
+.vue{display:none}.vue.active{display:block}
+.chargement{text-align:center;padding:36px 4px 8px}
+.chargement picture,.chargement img{display:block;width:96px;height:96px;margin:0 auto}
+.chargement img{animation:respire 1.6s ease-in-out infinite}
+.chargement h1{margin-top:22px}
+.chargement .intro{margin-left:auto;margin-right:auto}
+.barre{height:12px;border-radius:99px;background:var(--turquoise-pale);border:1px solid var(--turquoise-bord);overflow:hidden;margin:24px auto 0;max-width:340px}
+.barre span{display:block;height:100%;width:2%;background:var(--turquoise);border-radius:99px;transition:width .3s}
+@keyframes respire{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.lien-discret{background:none;border:0;font:inherit;font-size:.82rem;color:var(--turquoise-fonce);font-weight:700;text-decoration:underline;cursor:pointer;padding:10px}
+.champ{display:block;margin-bottom:18px}.champ span{display:block;font-weight:700;margin-bottom:6px}
+.note{font-size:.76rem;color:var(--muted)}
+.carte .note{margin:0 0 4px}
+@media (prefers-reduced-motion:reduce){.chargement img{animation:none}}
+.aidant-actuel{margin-bottom:16px;padding:14px 16px;border-radius:var(--r-btn);background:var(--turquoise-pale);border:1px solid var(--turquoise-bord)}
+.aidant-actuel p{margin:0}
+details.saisie{margin:14px 0 0;border:0;background:none}
+details.saisie summary{padding:10px 4px;font-size:.88rem;color:var(--turquoise-fonce)}
+.aide span{max-width:11em;overflow:hidden;text-overflow:ellipsis}

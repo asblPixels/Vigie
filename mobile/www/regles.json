@@ -1,0 +1,204 @@
+{
+ "seuil_rouge": 5,
+ "seuil_orange": 2,
+ "marques": {
+  "bpost": [
+   "bpost.be",
+   "bpost.cloud"
+  ],
+  "spf finances": [
+   "fgov.be",
+   "belgium.be"
+  ],
+  "myminfin": [
+   "fgov.be",
+   "belgium.be"
+  ],
+  "ebox": [
+   "belgium.be",
+   "fgov.be"
+  ],
+  "csam": [
+   "belgium.be",
+   "fgov.be",
+   "csam.be"
+  ],
+  "itsme": [
+   "itsme-id.com",
+   "itsme.be"
+  ],
+  "belfius": [
+   "belfius.be"
+  ],
+  "ing": [
+   "ing.be"
+  ],
+  "kbc": [
+   "kbc.be"
+  ],
+  "bnp paribas fortis": [
+   "bnpparibasfortis.be"
+  ],
+  "fortis": [
+   "bnpparibasfortis.be"
+  ],
+  "argenta": [
+   "argenta.be"
+  ],
+  "proximus": [
+   "proximus.be"
+  ],
+  "orange": [
+   "orange.be"
+  ],
+  "engie": [
+   "engie.be"
+  ],
+  "luminus": [
+   "luminus.be"
+  ],
+  "fluvius": [
+   "fluvius.be"
+  ],
+  "ores": [
+   "ores.be"
+  ],
+  "police": [
+   "police.be",
+   "belgium.be"
+  ],
+  "card stop": [
+   "cardstop.be"
+  ],
+  "mutualite": [
+   "mc.be",
+   "solidaris.be",
+   "partenamut.be",
+   "mloz.be",
+   "helan.be",
+   "lamutualitelibre.be"
+  ],
+  "solidaris": [
+   "solidaris.be"
+  ],
+  "netflix": [
+   "netflix.com"
+  ],
+  "amazon": [
+   "amazon.com",
+   "amazon.fr",
+   "amazon.com.be",
+   "amazon.de"
+  ]
+ },
+ "raccourcisseurs": [
+  "bit.ly",
+  "buff.ly",
+  "cutt.ly",
+  "is.gd",
+  "ow.ly",
+  "rb.gy",
+  "s.id",
+  "shorturl.at",
+  "t.co",
+  "t.ly",
+  "tiny.cc",
+  "tinyurl.com"
+ ],
+ "tld_suspects": [
+  "buzz",
+  "cfd",
+  "click",
+  "cyou",
+  "icu",
+  "info",
+  "live",
+  "monster",
+  "online",
+  "rest",
+  "sbs",
+  "shop",
+  "site",
+  "store",
+  "top",
+  "vip",
+  "xyz"
+ ],
+ "regles_texte": [
+  {
+   "motif": "code (pin|secret|itsme|de reponse|d.activation)|digipass|mot de passe|identifiants?|numero de (votre )?carte|code cvv|cvc|lecteur de carte",
+   "points": 4,
+   "raison": "On vous demande un code, un mot de passe ou les données de votre carte. Une banque, itsme ou l'administration ne le demandent JAMAIS par message."
+  },
+  {
+   "motif": "urgent|immediatement|dernier rappel|derniere chance|sous 24 ?h|dans les 24 heures|sous 48 ?h|aujourd.hui (seulement|avant)|sans delai|au plus vite",
+   "points": 2,
+   "raison": "Le message vous presse. Les escrocs créent l'urgence pour vous empêcher de réfléchir."
+  },
+  {
+   "motif": "suspendu|bloque|desactive|expire|sera (ferme|cloture|supprime)|acces restreint",
+   "points": 2,
+   "raison": "Le message menace de bloquer un compte ou un service. C'est une technique de peur classique."
+  },
+  {
+   "motif": "frais de (livraison|douane|port|reexpedition)|colis (en attente|retenu|bloque|non livre)|adresse (incomplete|incorrecte)",
+   "points": 3,
+   "raison": "On vous parle d'un colis bloqué ou de petits frais à payer. C'est une des arnaques les plus fréquentes."
+  },
+  {
+   "motif": "nouveau numero|telephone (est )?(casse|tombe|perdu)|c.est (moi|ton fils|ta fille)|(maman|papa|mamy|papy|mamie|papi)\\b.*(numero|whatsapp)",
+   "points": 4,
+   "raison": "Quelqu'un dit être un proche avec un nouveau numéro. Appelez votre proche sur son ANCIEN numéro avant toute chose."
+  },
+  {
+   "motif": "virement|payer|paiement|regler|reglement|montant de|versez",
+   "points": 1,
+   "raison": "Le message demande de l'argent."
+  },
+  {
+   "motif": "remboursement|vous avez gagne|gagnant|heritage|loterie|cadeau|prime exceptionnelle|investiss|crypto|bitcoin|rendement garanti",
+   "points": 2,
+   "raison": "On vous promet de l'argent ou un gain. Si c'est trop beau, c'est presque toujours faux."
+  },
+  {
+   "motif": "ne (le )?dites (rien|a personne)|restez discret|confidentiel",
+   "points": 3,
+   "raison": "On vous demande de garder le secret. Un vrai service ne demande jamais cela."
+  },
+  {
+   "motif": "carte (gift|cadeau|paysafe|google play|itunes|steam)|paysafecard|western union|moneygram",
+   "points": 5,
+   "raison": "On vous demande de payer avec des cartes cadeaux ou par transfert d'argent : c'est toujours une arnaque."
+  },
+  {
+   "motif": "anydesk|teamviewer|quicksupport|installez (l.application|le logiciel)|prendre le controle",
+   "points": 5,
+   "raison": "On veut prendre le contrôle de votre ordinateur ou téléphone à distance. N'installez rien."
+  },
+  {
+   "motif": "cliquez|cliquer|appuyez sur le lien|suivez le lien|mettez a jour vos (donnees|informations)",
+   "points": 1,
+   "raison": "On vous pousse à cliquer sur un lien."
+  }
+ ],
+ "url_re": "(https?://[^\\s<>\\\"']+|www\\.[^\\s<>\\\"']+|\\b[a-z0-9.-]+\\.[a-z]{2,10}/[^\\s<>\\\"']*)",
+ "conseils": {
+  "rouge": [
+   "Ne cliquez sur aucun lien et ne répondez pas.",
+   "Ne donnez aucun code, mot de passe ou numéro de carte.",
+   "Transférez le message à suspect@safeonweb.be, puis supprimez-le.",
+   "Si vous avez déjà donné des données bancaires : appelez Card Stop au 078 170 170, puis votre banque.",
+   "Parlez-en à une personne de confiance : il n'y a aucune honte, tout le monde peut être visé."
+  ],
+  "orange": [
+   "Ne cliquez pas sur le lien du message.",
+   "Vérifiez en contactant l'organisme vous-même, avec le numéro de votre carte ou de vos courriers habituels.",
+   "En cas de doute, demandez à votre personne de confiance avant d'agir."
+  ],
+  "vert": [
+   "S'il y a un lien, n'y allez pas depuis le message : tapez vous-même l'adresse du site officiel.",
+   "Rappel : votre banque, itsme ou l'administration ne vous demanderont jamais votre code.",
+   "Si quelque chose vous semble bizarre, demandez à votre personne de confiance."
+  ]
+ }
+}

@@ -1,0 +1,49 @@
+name: Application Android
+
+# Construit l'APK de Vigie à chaque modification de l'application, et l'attache à une version quand on pousse une étiquette « v… ».
+on:
+  push:
+    branches: [main, Vigie]
+    paths: ['mobile/**', 'static/**', 'regles.py', 'outils/**', '.github/workflows/android.yml']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: android-actions/setup-android@v3
+
+      - name: Règles identiques sur PC et téléphone
+        run: python3 outils/exporter_regles.py
+      - name: Installer et préparer l'application
+        working-directory: mobile
+        run: |
+          npm ci
+          npm run sync
+      - name: Construire l'APK
+        working-directory: mobile/android
+        run: ./gradlew --no-daemon assembleDebug
+      - name: Nommer l'APK
+        run: cp mobile/android/app/build/outputs/apk/debug/app-debug.apk Vigie-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Vigie-android
+          path: Vigie-android.apk
+          retention-days: 90
+      - name: Joindre l'APK à la version
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Vigie-android.apk
+          draft: true

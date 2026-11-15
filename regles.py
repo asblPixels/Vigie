@@ -153,16 +153,16 @@ CONSEILS = {
         "Ne donnez aucun code, mot de passe ou numéro de carte.",
         "Transférez le message à suspect@safeonweb.be, puis supprimez-le.",
         "Si vous avez déjà donné des données bancaires : appelez Card Stop au 078 170 170, puis votre banque.",
-        "Parlez-en à votre aidant : il n'y a aucune honte, tout le monde peut être visé.",
+        "Parlez-en à une personne de confiance : il n'y a aucune honte, tout le monde peut être visé.",
     ],
     "orange": [
         "Ne cliquez pas sur le lien du message.",
         "Vérifiez en contactant l'organisme vous-même, avec le numéro de votre carte ou de vos courriers habituels.",
-        "En cas de doute, demandez à votre aidant avant d'agir.",
+        "En cas de doute, demandez à votre personne de confiance avant d'agir.",
     ],
     "vert": [
         "S'il y a un lien, n'y allez pas depuis le message : tapez vous-même l'adresse du site officiel.",
         "Rappel : votre banque, itsme ou l'administration ne vous demanderont jamais votre code.",
-        "Si quelque chose vous semble bizarre, demandez à votre aidant.",
+        "Si quelque chose vous semble bizarre, demandez à votre personne de confiance.",
     ],
 }
