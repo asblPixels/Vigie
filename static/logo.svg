@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 160" role="img" aria-label="Vigie, par Pixel's ASBL">
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E2A38"/>
+      <stop offset="1" stop-color="#008080"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(16 16) scale(.25)">
+    <rect width="512" height="512" rx="112" fill="url(#fond)"/>
+    <path d="M256 92 388 142v112c0 88-56 148-132 172-76-24-132-84-132-172V142z" fill="#fff"/>
+    <path d="M190 262l46 46 88-96" fill="none" stroke="#008080" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="356" y="84" width="64" height="64" rx="10" fill="#5EEAD4"/>
+  </g>
+  <text x="168" y="92" font-family="Cantarell, 'Noto Sans', 'DejaVu Sans', sans-serif" font-size="68" font-weight="700" fill="#0E2A38" letter-spacing="-1">Vigie</text>
+  <text x="171" y="128" font-family="Cantarell, 'Noto Sans', 'DejaVu Sans', sans-serif" font-size="22" font-weight="600" fill="#008080">par Pixel's ASBL</text>
+</svg>
