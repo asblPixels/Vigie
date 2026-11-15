@@ -22,7 +22,8 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 21 }
-      - uses: android-actions/setup-android@v3
+      - name: Accepter les licences du SDK Android (déjà installé sur le serveur)
+        run: yes | "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager --licenses >/dev/null || true
 
       - name: Règles identiques sur PC et téléphone
         run: python3 outils/exporter_regles.py
