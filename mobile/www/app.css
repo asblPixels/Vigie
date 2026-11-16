@@ -102,10 +102,10 @@ details.carte-ligne{margin-bottom:10px}
 @media (prefers-reduced-motion:reduce){.faisceau{animation:none;top:40%}.scan-etapes li.actif::before{animation:none}}
 
 /* Présentation de premier lancement (carrousel) */
-.bienvenue{display:flex;flex-direction:column;min-height:calc(100vh - 150px)}
-.bv-piste{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 calc(var(--pad,20px) * -1);flex:1}
+.bienvenue{display:flex;flex-direction:column;height:calc(100vh - 150px);height:calc(100dvh - 150px)}
+.bv-piste{min-height:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 calc(var(--pad,20px) * -1);flex:1}
 .bv-piste::-webkit-scrollbar{display:none}
-.bv-slide{flex:0 0 100%;scroll-snap-align:center;padding:12px var(--pad,20px) 8px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.bv-slide{overflow-y:auto;flex:0 0 100%;scroll-snap-align:center;padding:12px var(--pad,20px) 8px;text-align:center;display:flex;flex-direction:column;align-items:center}
 .bv-slide h1{margin:6px 0 10px}.bv-slide .intro{max-width:30em;margin-left:auto;margin-right:auto}
 .bv-picto{width:132px;height:132px;border-radius:50%;margin:18px 0 22px;display:grid;place-items:center;background:var(--turquoise-pale);border:1px solid var(--turquoise-bord);color:var(--turquoise-fonce)}
 .bv-picto svg{width:64px;height:64px}.bv-picto picture,.bv-picto img{display:block;width:84px;height:84px}
@@ -117,7 +117,9 @@ details.carte-ligne{margin-bottom:10px}
 .bv-apercu{margin:14px 0 0;padding:12px 14px;border-radius:var(--r-btn);background:var(--turquoise-pale);border:1px solid var(--turquoise-bord);font-weight:600}
 .bv-points{display:flex;justify-content:center;gap:8px;margin:10px 0 16px}
 .bv-points i{width:10px;height:10px;border-radius:50%;background:var(--line);transition:width .2s,background .2s}.bv-points i.actif{width:28px;border-radius:99px;background:var(--turquoise)}
-.bv-actions{display:grid;gap:6px}
+.bv-actions{display:grid;gap:2px;flex:none;padding-bottom:4px}
+.sans-onglets .pied{display:none}
+@media (max-height:780px){.bv-picto{width:96px;height:96px;margin:6px 0 14px}.bv-picto svg{width:48px;height:48px}.bv-picto img{width:62px;height:62px}.bv-langues button{min-height:46px}}
 .btn-lien{background:none;border:0;color:var(--turquoise-fonce);font:inherit;font-weight:700;min-height:48px}
 .seg-4{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}
 .coordonnees{font-style:normal;display:grid;gap:4px;margin:4px 0 10px}

@@ -2,7 +2,7 @@
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.3.0';
+  const VERSION = '0.3.1';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -233,11 +233,11 @@
   }
 
   /* ================= Écran de scan : gros pourcentage, faisceau, étapes ================= */
-  let cible = 0, aff = 0, raf = 0;
+  let cible = 0, aff = 0, raf = 0, rapide = false;
   const attendre = async (p) => { while (!annule && aff < p - 0.5) await pause(40); };
 
   function boucleScan() {
-    aff += (cible - aff) * 0.09;
+    aff += (cible - aff) * (rapide ? 0.28 : 0.09);
     if (Math.abs(cible - aff) < 0.4) aff = cible;
     $('scan-pct').textContent = Math.round(aff);
     $('barre-int').style.width = aff + '%';
@@ -249,7 +249,7 @@
     if (libelle) $('scan-statut').textContent = libelle;
   }
   function demarrerScan(photoURL, texte) {
-    annule = false; cible = 0; aff = 0; erreur('');
+    annule = false; cible = 0; aff = 0; rapide = !photoURL; erreur('');
     $('scan-photo').hidden = !photoURL;
     if (photoURL) $('scan-photo').src = photoURL;
     $('scan-texte').hidden = !!photoURL;
@@ -266,10 +266,23 @@
 
   async function conclure(texte, photo) {
     etape(2, t('s.st.indices')); cible = 90; await attendre(88); if (annule) return;
-    await pause(450); if (annule) return;
+    await pause(rapide ? 100 : 450); if (annule) return;
     etape(3, t('s.e3')); cible = 100; await attendre(99.5); if (annule) return;
-    await pause(500); if (annule) return;
+    await pause(rapide ? 120 : 500); if (annule) return;
     finScan(); afficher(texte, photo, true, true);
+  }
+
+  /* Lecture native Android (ML Kit, embarquée) : quasi instantanée. Sinon on retombe sur Tesseract. */
+  const natif = () => { try { return window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() ? Capacitor.registerPlugin('LectureTexte') : null; } catch (e) { return null; } };
+  async function lireNatif(fichier, plugin) {
+    const bmp = await createImageBitmap(fichier, { imageOrientation: 'from-image' });
+    const k = Math.min(1, 2200 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); if (bmp.close) bmp.close();
+    const blob = await new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/jpeg', 0.92));
+    const data = await new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = ko; f.readAsDataURL(blob); });
+    cible = 40;
+    return (await plugin.lire({ data })).texte || '';
   }
 
   async function analyserPhoto(fichier) {
@@ -280,9 +293,15 @@
     const patience = setTimeout(() => { $('scan-statut').textContent = t('s.st.long'); }, 12000);
     try {
       cible = 6;
-      const { bandes, mixte } = await preparer(fichier); if (annule) return;
-      cible = 14;
-      const texte = (await lireImages(bandes, mixte) || '').trim(); if (annule) return;
+      const N = natif();
+      let texte = null;
+      if (N) { try { rapide = true; texte = (await lireNatif(fichier, N)).trim(); cible = 88; } catch (e) { texte = null; rapide = false; } }
+      if (annule) return;
+      if (texte === null) {
+        const { bandes, mixte } = await preparer(fichier); if (annule) return;
+        cible = 14;
+        texte = (await lireImages(bandes, mixte) || '').trim(); if (annule) return;
+      }
       if (texte.replace(/\s/g, '').length < 12) {
         finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
         erreur(t('err.illisible'));
@@ -298,8 +317,7 @@
 
   async function analyserTexte(texte) {
     demarrerScan(null, texte);
-    cible = 24; await attendre(22); if (annule) return;
-    etape(1, t('s.st.lecture')); cible = 55; await attendre(52); if (annule) return;
+    cible = 50; await attendre(45); if (annule) return;
     await conclure(texte, false);
   }
 
