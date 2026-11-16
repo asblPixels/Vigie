@@ -7,8 +7,8 @@
 ## Ce que Vigie garantit
 
 - Le message et les photos sont traités sur l'appareil et ne sont jamais envoyés.
-- Le contact de confiance est stocké localement, choisi par l'utilisateur.
-- L'application Android n'a pas la permission de lire le répertoire ; elle n'utilise l'appareil photo que sur demande.
+- Les réglages et l'historique facultatif sont stockés localement.
+- L'application Android ne demande aucune autorisation sensible (ni contacts, ni micro, ni position) ; elle n'utilise l'appareil photo que sur demande.
 - Aucun compte, aucune statistique, aucun traceur.
 
 ## Ce que Vigie ne garantit pas

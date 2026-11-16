@@ -49,7 +49,6 @@ Vigie ist für Menschen gemacht, die wenig mit digitalen Werkzeugen arbeiten: ei
 - **Offline und privat.** Die Nachricht wird auf dem Gerät analysiert und nirgendwohin gesendet.
 - **Transparent.** Die Urteile stammen aus lesbaren Regeln (`regles.py`), nicht aus einer Blackbox. Eine optionale lokale KI darf das Ergebnis erklären, nie entscheiden.
 - **Für alle.** Sie dürfen die Nachricht einer anderen Person fotografieren: Eltern, Nachbarn, einen erhaltenen Brief.
-- **Eine Vertrauensperson, die Sie selbst wählen.** Im Zweifel schlägt Vigie vor, die Person anzurufen, die Sie selbst aus Ihren Kontakten gewählt haben. Niemand sonst.
 
 ## In der Android-App
 
@@ -58,7 +57,7 @@ Vigie ist für Menschen gemacht, die wenig mit digitalen Werkzeugen arbeiten: ei
 - **Verlauf** der geprüften Nachrichten, nur auf dem Telefon gespeichert, abschaltbar und mit einem Tipp löschbar.
 - **Hilfe**: was tun nach einem Klick, nach Weitergabe von Codes, nach einer Zahlung oder nach einem falschen Bankanruf; wichtige Nummern.
 - **An Safeonweb melden** und Ergebnis **teilen** mit einem Tipp.
-- **Einstellungen**: Textgröße (3 Stufen), helles, dunkles oder automatisches Design, Vorlesen, Vertrauensperson.
+- **Einstellungen**: Textgröße (3 Stufen), helles, dunkles oder automatisches Design, Vorlesen, Sprache (Französisch, Niederländisch, Italienisch, Deutsch).
 
 ## Installation
 
@@ -86,11 +85,9 @@ python3 app.py --telephone    # zeigt eine Adresse und einen QR-Code zum Scannen
 
 Öffnen Sie die Adresse in Safari und wählen Sie „Zum Home-Bildschirm“. Eine native iPhone-App gibt es noch nicht (siehe Fahrplan).
 
-## Ihre Vertrauensperson
+## Android-Berechtigungen
 
-Vigie schlägt nie vor, eine Nummer anzurufen, die sie selbst für Sie ausgewählt hätte. Unter **Réglages → Ma personne de confiance** wählen Sie einen Kontakt aus Ihrem Adressbuch oder tippen eine Nummer von Hand ein. Sie wird nur auf Ihrem Gerät gespeichert.
-
-Unter Android läuft die Auswahl über die Kontaktauswahl des Systems: Vigie erhält nur den gewählten Kontakt und hat **keine** Berechtigung, Ihr Adressbuch zu lesen.
+Vigie fragt nur das Nötigste ab: die **Kamera**, nur wenn Sie auf « Foto aufnehmen » tippen. Keine Kontakte, kein Mikrofon, kein Standort, kein Speicher, keine SMS, keine Benachrichtigungen. Der Internetzugriff wird vom technischen Rahmen von Android deklariert, Vigie sendet aber keine Daten. Details stehen in der App unter Einstellungen → Über Vigie und Rechtliches (rechtliche Hinweise, DSGVO-Rechte, Berechtigungen).
 
 ## Datenschutz
 
@@ -98,7 +95,6 @@ Unter Android läuft die Auswahl über die Kontaktauswahl des Systems: Vigie erh
 |---|---|
 | Text der Nachricht | Auf dem Gerät analysiert, nie gesendet |
 | Foto | Auf dem Gerät gelesen; Vigie behält keine Kopie |
-| Vertrauensperson | Nur auf dem Gerät gespeichert |
 | Verlauf | Nur auf dem Gerät, abschaltbar und löschbar |
 | Statistiken, Cookies, Konten | Keine |
 
@@ -131,10 +127,10 @@ Die APK wird von GitHub Actions (`.github/workflows/android.yml`) bei jeder Änd
 ## Fahrplan
 
 - [x] PC-Prototyp, neu gestaltete Oberfläche, Kamera unter iOS und Android
-- [x] Eigenständige Android-App (Regeln, Fotoerkennung, Stimme, Vertrauensperson)
+- [x] Eigenständige Android-App (Regeln, Fotoerkennung, Stimme, 4 Sprachen)
 - [ ] Test auf echten Geräten und Signierung der APK für die Verteilung
 - [ ] iPhone-App
-- [ ] Oberfläche auf Niederländisch, Italienisch und Deutsch
+- [x] Oberfläche auf Niederländisch, Italienisch und Deutsch
 - [ ] Regeln um aktuelle Betrugskampagnen in Belgien erweitern
 
 ## Wer steht hinter Vigie

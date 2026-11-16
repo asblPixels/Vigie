@@ -49,7 +49,6 @@ Vigie is gemaakt voor mensen die weinig met digitale hulpmiddelen werken: één 
 - **Offline en privé.** Het bericht wordt op het toestel geanalyseerd en nergens naartoe verstuurd.
 - **Transparant.** De uitspraken komen uit leesbare regels (`regles.py`), niet uit een zwarte doos. Een optionele lokale AI kan het resultaat toelichten, nooit bepalen.
 - **Voor iedereen.** U mag het bericht van iemand anders fotograferen: een ouder, een buur, een ontvangen brief.
-- **Een vertrouwenspersoon die u zelf kiest.** Bij twijfel stelt Vigie voor de persoon te bellen die u zelf uit uw contacten koos. Niemand anders.
 
 ## In de Android-app
 
@@ -58,7 +57,7 @@ Vigie is gemaakt voor mensen die weinig met digitale hulpmiddelen werken: één 
 - **Geschiedenis** van gecontroleerde berichten, bewaard op de telefoon, uit te schakelen en met één tik te wissen.
 - **Hulp**: wat te doen na een klik, na het geven van codes, na een betaling of na een valse bankoproep; nuttige nummers.
 - **Melden aan Safeonweb** en het resultaat **delen** met één tik.
-- **Instellingen**: tekstgrootte (3 niveaus), licht, donker of automatisch thema, voorlezen, vertrouwenspersoon.
+- **Instellingen**: tekstgrootte (3 niveaus), licht, donker of automatisch thema, voorlezen, taal (Frans, Nederlands, Italiaans, Duits).
 
 ## Installeren
 
@@ -86,11 +85,9 @@ python3 app.py --telephone    # toont een adres en een QR-code om te scannen (ze
 
 Open het adres in Safari en kies "Zet op beginscherm". Een native iPhone-app bestaat nog niet (zie de routekaart).
 
-## Uw vertrouwenspersoon
+## Android-machtigingen
 
-Vigie stelt nooit voor een nummer te bellen dat ze zelf voor u koos. Via **Réglages → Ma personne de confiance** kiest u een contact uit uw adresboek of typt u een nummer in. Het wordt alleen op uw toestel bewaard.
-
-Op Android verloopt de keuze via de contactkiezer van het systeem: Vigie ontvangt alleen het gekozen contact en heeft **geen** toestemming om uw adresboek te lezen.
+Vigie vraagt het strikte minimum: de **camera**, enkel wanneer u op « Foto nemen » tikt. Geen contacten, microfoon, locatie, opslag, sms of meldingen. Toegang tot internet wordt aangegeven door het technische kader van Android, maar Vigie verstuurt geen gegevens. Alle details staan in de app, onder Instellingen → Over Vigie en juridische vermeldingen (juridische vermeldingen, AVG-rechten, machtigingen).
 
 ## Privacy
 
@@ -98,7 +95,6 @@ Op Android verloopt de keuze via de contactkiezer van het systeem: Vigie ontvang
 |---|---|
 | Tekst van het bericht | Op het toestel geanalyseerd, nooit verstuurd |
 | Foto | Op het toestel gelezen; Vigie bewaart er geen kopie van |
-| Vertrouwenspersoon | Alleen op het toestel bewaard |
 | Geschiedenis | Alleen op het toestel, uit te schakelen en te wissen |
 | Statistieken, cookies, accounts | Geen |
 
@@ -111,7 +107,7 @@ De Android-app dwingt bovendien een beveiligingsbeleid (CSP) af dat het laden va
 | Detectie | Leesbare regels: officiële merken en domeinen, linkverkorters, verdachte extensies, drukkende woordkeuze (`regles.py`) |
 | Overal dezelfde uitspraak | De regels worden naar de telefoon geëxporteerd (`regles.json`); `outils/verifier_parite.py` bewijst dat pc en Android identiek antwoorden |
 | Foto's lezen | Tesseract (pc) · ingebouwde Tesseract.js met Franse taaldata (Android) |
-| Android-app | Capacitor 8, native contactkiezer, spraaksynthese |
+| Android-app | Capacitor 8, spraaksynthese |
 | Interface | Eén stijlblad voor pc en Android, licht en donker thema, lettertype Atkinson Hyperlegible Next |
 | Optionele AI (pc) | Lokale Ollama (`qwen2.5:3b`): licht toe, beslist nooit |
 
@@ -131,10 +127,10 @@ De APK wordt door GitHub Actions gebouwd (`.github/workflows/android.yml`) bij e
 ## Routekaart
 
 - [x] Pc-prototype, nieuw ontwerp, camera op iOS en Android
-- [x] Zelfstandige Android-app (regels, foto's lezen, stem, vertrouwenspersoon)
+- [x] Zelfstandige Android-app (regels, foto's lezen, stem, 4 talen)
 - [ ] Test op echte toestellen en ondertekening van de APK voor verspreiding
 - [ ] iPhone-app
-- [ ] Interface in het Nederlands, Italiaans en Duits
+- [x] Interface in het Nederlands, Italiaans en Duits
 - [ ] Regels aanvullen met recente Belgische oplichtingscampagnes
 
 ## Wie zit achter Vigie

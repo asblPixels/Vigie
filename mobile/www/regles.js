@@ -41,12 +41,13 @@
       var score = 0;
       var trouvees = new Map();
 
-      function ajouter(points, raison) {
-        score += points;
+      var codes = new Map();   // raison française -> {k: clé de traduction, p: paramètres}, pour l'interface multilingue
+      function ajouter(points, raison, k, p) {
+        score += points; if (k) codes.set(raison, { k: k, p: p || {} });
         trouvees.set(raison, Math.max(points, trouvees.get(raison) || 0));
       }
 
-      reglesTexte.forEach(function (r) { if (r.re.test(t)) ajouter(r.points, r.raison); });
+      reglesTexte.forEach(function (r, i) { if (r.re.test(t)) ajouter(r.points, r.raison, 'r.t' + i); });
 
       var marques = nomsMarques.filter(function (m, i) { return reMarques[i].test(t); });
 
@@ -54,35 +55,35 @@
       var hotes = liens.map(domaine).filter(Boolean);
       hotes.forEach(function (hote) {
         if (raccourcisseurs.has(hote)) {
-          ajouter(2, 'Le lien «' + NBSP + hote + NBSP + '» cache la vraie adresse du site.');
+          ajouter(2, 'Le lien «' + NBSP + hote + NBSP + '» cache la vraie adresse du site.', 'r.raccourci', { h: hote });
         }
         if (/^[\d.]+$/.test(hote)) {
-          ajouter(3, "Le lien est une suite de chiffres au lieu d'un nom de site : très suspect.");
+          ajouter(3, "Le lien est une suite de chiffres au lieu d'un nom de site : très suspect.", 'r.ip');
         }
         var fin = hote.split('.').pop();
         if (tldSuspects.has(fin)) {
-          ajouter(2, 'Le lien se termine par «' + NBSP + '.' + fin + NBSP + '», une terminaison souvent utilisée par les escrocs.');
+          ajouter(2, 'Le lien se termine par «' + NBSP + '.' + fin + NBSP + '», une terminaison souvent utilisée par les escrocs.', 'r.tld', { e: fin });
         }
         if (/(secur|verif|login|update|confirm|client|support|paiement|colis|rembourse)/.test(hote)) {
-          ajouter(1, "L'adresse «" + NBSP + hote + NBSP + '» utilise des mots rassurants pour imiter un site officiel.');
+          ajouter(1, "L'adresse «" + NBSP + hote + NBSP + '» utilise des mots rassurants pour imiter un site officiel.', 'r.mots', { h: hote });
         } else if ((hote.match(/-/g) || []).length >= 2) {
-          ajouter(1, "L'adresse «" + NBSP + hote + NBSP + '» est inhabituelle, avec beaucoup de tirets.');
+          ajouter(1, "L'adresse «" + NBSP + hote + NBSP + '» est inhabituelle, avec beaucoup de tirets.', 'r.tirets', { h: hote });
         }
         marques.forEach(function (m) {
           if (!appartient(hote, R.marques[m])) {
             ajouter(3, 'Le message parle de «' + NBSP + m + NBSP + '» mais le lien mène à «' + NBSP + hote + NBSP +
-              "», qui n'est pas le site officiel (" + R.marques[m].join(', ') + ').');
+              "», qui n'est pas le site officiel (" + R.marques[m].join(', ') + ').', 'r.marque', { m: m, h: hote, o: R.marques[m].join(', ') });
           }
         });
       });
       if (liens.length && trouvees.size === 0) {
-        ajouter(1, "Le message contient un lien. N'y allez pas depuis le message : tapez vous-même l'adresse officielle.");
+        ajouter(1, "Le message contient un lien. N'y allez pas depuis le message : tapez vous-même l'adresse officielle.", 'r.lien');
       }
 
       // Les raisons les plus graves d'abord (tri stable, comme en Python).
       var raisons = Array.from(trouvees.keys()).sort(function (a, b) { return trouvees.get(b) - trouvees.get(a); });
       var verdict = score >= R.seuil_rouge ? 'rouge' : score >= R.seuil_orange ? 'orange' : 'vert';
-      return { verdict: verdict, score: score, raisons: raisons, liens: liens, marques: marques,
+      return { verdict: verdict, score: score, raisons: raisons, codes: raisons.map(function (x) { return codes.get(x) || null; }), liens: liens, marques: marques,
                conseils: R.conseils[verdict] };
     };
   }

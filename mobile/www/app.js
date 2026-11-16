@@ -1,21 +1,42 @@
-/* Vigie — application Android autonome. Pixel's ASBL, Boussu — GPL-3.0
+/* Vigie — application Android autonome. GPL-3.0
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.2.1';
+  const VERSION = '0.3.0';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const chiffres = (t) => String(t || '').replace(/[^+\d]/g, '');
-  const lire = (cle, defaut) => { try { const v = JSON.parse(localStorage.getItem(cle)); return v == null ? defaut : v; } catch (e) { return defaut; } };
+    const lire = (cle, defaut) => { try { const v = JSON.parse(localStorage.getItem(cle)); return v == null ? defaut : v; } catch (e) { return defaut; } };
   const ecrire = (cle, v) => { try { localStorage.setItem(cle, JSON.stringify(v)); } catch (e) { /* stockage plein ou refusé : on continue */ } };
 
-  let R = null, analyser = null, travailleur = null, dernier = null, annule = false;
+  let R = null, analyser = null, travailleur = null, dernier = null, annule = false, photoEnCours = true;
 
   /* ================= Préférences ================= */
-  const PREFS_DEFAUT = { taille: 'normal', theme: 'auto', voix: false, historique: true };
+  const LANGUES = ['fr', 'nl', 'it', 'de'];
+  const PARLE = { fr: 'fr-BE', nl: 'nl-BE', it: 'it-IT', de: 'de-DE' };
+  const DATE = { fr: 'fr-BE', nl: 'nl-BE', it: 'it-IT', de: 'de-DE' };
+  const detecter = () => { const l = String(navigator.language || 'fr').slice(0, 2).toLowerCase(); return LANGUES.indexOf(l) >= 0 ? l : 'fr'; };
+  const PREFS_DEFAUT = { taille: 'normal', theme: 'auto', voix: false, historique: true, langue: detecter() };
   let prefs = Object.assign({}, PREFS_DEFAUT, lire('vigie.prefs', {}));
 
+  const DICO = window.VIGIE_I18N || {};
+  const t = (cle, p) => {
+    let x = (DICO[prefs.langue] && DICO[prefs.langue][cle]) || (DICO.fr && DICO.fr[cle]) || cle;
+    if (p) Object.keys(p).forEach((k) => { x = x.split('{' + k + '}').join(p[k]); });
+    return x;
+  };
+  function traduirePage() {
+    document.documentElement.lang = prefs.langue;
+    document.querySelectorAll('[data-i18n]').forEach((e) => { e.textContent = t(e.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-html]').forEach((e) => { e.innerHTML = t(e.dataset.i18nHtml); });
+    document.querySelectorAll('[data-i18n-ph]').forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
+    document.querySelectorAll('[data-i18n-aria]').forEach((e) => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
+    $('version-ligne').textContent = t('p.version', { v: VERSION });
+    document.querySelectorAll('button[data-langue]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.langue === prefs.langue)));
+    if (!$('histo-effacer-txt').dataset.attente) $('histo-effacer-txt').textContent = t('h.effacer');
+    $('etape-0-txt').textContent = t(photoEnCours ? 's.e0.photo' : 's.e0.msg');
+    if (typeof pasBienvenue === 'function' && typeof piste !== 'undefined') pasBienvenue();   // le bouton du carrousel suit la langue
+  }
   function appliquerPrefs() {
     const h = document.documentElement;
     h.dataset.taille = prefs.taille;
@@ -28,22 +49,16 @@
     document.querySelectorAll('button[data-theme]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === prefs.theme)));
     $('reg-voix').checked = !!prefs.voix;
     $('reg-histo').checked = !!prefs.historique;
+    traduirePage();
   }
-  function majPref(cle, valeur) { prefs[cle] = valeur; ecrire('vigie.prefs', prefs); appliquerPrefs(); }
-
-  /* ================= Personne de confiance (choisie par l'utilisateur, jamais préréglée) ================= */
-  const aidant = () => { const a = lire('vigie.aidant', null); return a && a.tel ? a : null; };
-  function majAidant() {
-    const a = aidant(), h = $('aide-haut');
-    h.hidden = !a || vueCourante === 'scan' || vueCourante === 'bienvenue';
-    if (a) { h.href = 'tel:' + chiffres(a.tel); h.lastChild.textContent = 'Appeler ' + a.nom; }
-    $('reg-aidant').textContent = a ? a.nom + ' · ' + a.tel : 'Aucune personne choisie';
-    $('reg-aidant-btn').lastChild.textContent = a ? 'Modifier' : 'Choisir';
+  function majPref(cle, valeur) {
+    prefs[cle] = valeur; ecrire('vigie.prefs', prefs); appliquerPrefs();
+    if (cle === 'langue') { if (vueCourante === 'resultat' && dernier && analyser) afficher(dernier.t, dernier.p, false, false); if (vueCourante === 'historique') rendreHistorique(); }
   }
 
   /* ================= Navigation ================= */
   const ONGLET = { accueil: 'accueil', scan: 'accueil', resultat: 'accueil', historique: 'historique', aide: 'aide',
-    reglages: 'reglages', confiance: 'reglages', apropos: 'reglages', bienvenue: '' };
+    reglages: 'reglages', apropos: 'reglages', bienvenue: '' };
   let vueCourante = 'accueil';
 
   function vue(nom, empiler) {
@@ -54,8 +69,6 @@
     });
     document.body.classList.toggle('sans-onglets', nom === 'scan' || nom === 'bienvenue');
     if (nom === 'historique') rendreHistorique();
-    if (nom === 'reglages') majAidant();
-    majAidant();
     if (empiler) history.pushState({ v: nom }, '', '#' + nom);
     window.scrollTo(0, 0);
   }
@@ -146,13 +159,14 @@
   const simd = () => {
     try { return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11])); } catch (e) { return false; }
   };
-  let pool = [], initp = [], prog = [], passe = [], minuteurLiberation = 0;
+  let pool = [], initp = [], prog = [], phase = 0, nPhases = 1, minuteurLiberation = 0;
   function majCible() {
     const n = Math.max(1, pool.length);
     let ini = 0, rec = 0;
-    for (let i = 0; i < n; i++) { ini += initp[i] || 0; rec += Math.min(0.97, ((passe[i] || 0) + (prog[i] || 0)) / 2); }   // 2 passes : normale + inversée
+    for (let i = 0; i < n; i++) { ini += initp[i] || 0; rec += prog[i] || 0; }
     ini /= n; rec /= n;
-    cible = Math.max(cible, 14 + ini * 14, rec > 0 ? 28 + rec * 60 : 0);
+    const total = Math.min(0.97, (phase + rec) / nPhases);
+    cible = Math.max(cible, 14 + ini * 14, total > 0 ? 28 + total * 58 : 0);
   }
   function creerTravailleur(i) {
     const base = new URL('ocr/', location.href).href;
@@ -161,7 +175,7 @@
       corePath: base + (simd() ? 'tesseract-core-simd-lstm.wasm.js' : 'tesseract-core-lstm.wasm.js'),
       langPath: base, gzip: true, cacheMethod: 'none', workerBlobURL: false,
       logger: (m) => {
-        if (m.status === 'recognizing text') { if (m.progress + 0.25 < (prog[i] || 0)) passe[i] = (passe[i] || 0) + 1; prog[i] = m.progress; majCible(); }
+        if (m.status === 'recognizing text') { prog[i] = m.progress; majCible(); }
         else if (m.status && /load|init/.test(m.status)) { initp[i] = Math.max(initp[i] || 0, m.progress || 0); majCible(); }
       }
     });
@@ -174,23 +188,48 @@
   function libererTravailleurs() {
     clearTimeout(minuteurLiberation);
     pool.forEach((p) => p.then((w) => w.terminate()).catch(() => {}));
-    pool = []; initp = []; prog = []; passe = [];
+    pool = []; initp = []; prog = []; phase = 0; nPhases = 1;
   }
   const planifierLiberation = () => { clearTimeout(minuteurLiberation); minuteurLiberation = setTimeout(libererTravailleurs, 60000); };   // rend la mémoire au téléphone
+  const delaiMax = (ms) => { let t; const p = new Promise((_, ko) => { t = setTimeout(() => ko(new Error('delai')), ms); }); p.stop = () => clearTimeout(t); return p; };
+  async function inverserImage(blob) {
+    const bmp = await createImageBitmap(blob), c = document.createElement('canvas');
+    c.width = bmp.width; c.height = bmp.height;
+    const g = c.getContext('2d'); g.drawImage(bmp, 0, 0);
+    g.globalCompositeOperation = 'difference'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/png'));
+  }
+  const lireBandes = (ws, images) => Promise.all(ws.map(async (w, i) => (await w.recognize(images[i])).data.text || ''));
+
   async function lireImages(bandes, mixte) {
     const ws = await obtenirTravailleurs(bandes.length);
     if (annule) return '';
-    etape(1, 'Lecture du texte…');
-    prog = []; passe = [];
-    const delai = new Promise((_, ko) => setTimeout(() => ko(new Error('delai')), 150000));
+    etape(1, t('s.st.lecture'));
+    prog = []; phase = 0; nPhases = mixte ? 2 : 1;
+    const dur = delaiMax(150000);
     try {
-      const textes = await Promise.race([delai, Promise.all(ws.map(async (w, i) => {
-        await w.setParameters({ tessedit_do_invert: mixte ? '1' : '0' });
-        return (await w.recognize(bandes[i])).data.text || '';
-      }))]);
-      planifierLiberation();
-      return textes.join('\n');
-    } catch (e) { libererTravailleurs(); throw e; }
+      await Promise.all(ws.map((w) => w.setParameters({ tessedit_do_invert: '0' })));
+      // Passe 1 : lecture normale. Elle suffit presque toujours et donne déjà un texte exploitable.
+      let texte = (await Promise.race([dur, lireBandes(ws, bandes)])).join('\n');
+      if (mixte && !annule) {
+        // Passe 2 (bulles de couleurs opposées) : lue sur l'image inversée, avec un délai. Trop lente, on garde la passe 1.
+        phase = 1; prog = [];
+        $('scan-statut').textContent = t('s.st.lecture');
+        const inv = await Promise.all(bandes.map(inverserImage));
+        const court = delaiMax(35000);
+        try {
+          const t2 = (await Promise.race([court, dur, lireBandes(ws, inv)])).join('\n');
+          texte += '\n' + t2;
+        } catch (e) {
+          if (!e || e.message !== 'delai' || texte.replace(/\s/g, '').length < 12) throw e;
+          libererTravailleurs();                      // la 2e passe s'éternise : on arrête et on garde la 1re
+        } finally { court.stop(); }
+      }
+      cible = Math.max(cible, 86);
+      if (pool.length) planifierLiberation();
+      return texte;
+    } catch (e) { libererTravailleurs(); throw e; } finally { dur.stop(); }
   }
 
   /* ================= Écran de scan : gros pourcentage, faisceau, étapes ================= */
@@ -215,9 +254,10 @@
     if (photoURL) $('scan-photo').src = photoURL;
     $('scan-texte').hidden = !!photoURL;
     if (!photoURL) $('scan-texte').textContent = texte.slice(0, 280);
-    $('scan-surtitre').textContent = photoURL ? 'Analyse de la photo' : 'Analyse du message';
-    $('etape-0-txt').textContent = photoURL ? 'Photo préparée' : 'Message reçu';
-    etape(0, photoURL ? 'Préparation de la photo…' : 'Message reçu…');
+    photoEnCours = !!photoURL;
+    $('scan-surtitre').textContent = t(photoURL ? 's.surtitre.photo' : 's.surtitre.msg');
+    $('etape-0-txt').textContent = t(photoURL ? 's.e0.photo' : 's.e0.msg');
+    etape(0, t(photoURL ? 's.st.prep' : 's.st.recu'));
     cancelAnimationFrame(raf); boucleScan();
     vue('scan', true);
   }
@@ -225,9 +265,9 @@
   $('scan-annuler').addEventListener('click', () => { annule = true; finScan(); reinitialiser(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil'); });
 
   async function conclure(texte, photo) {
-    etape(2, "Recherche d'indices connus…"); cible = 90; await attendre(88); if (annule) return;
+    etape(2, t('s.st.indices')); cible = 90; await attendre(88); if (annule) return;
     await pause(450); if (annule) return;
-    etape(3, 'Verdict'); cible = 100; await attendre(99.5); if (annule) return;
+    etape(3, t('s.e3')); cible = 100; await attendre(99.5); if (annule) return;
     await pause(500); if (annule) return;
     finScan(); afficher(texte, photo, true, true);
   }
@@ -237,7 +277,7 @@
     demarrerScan(url);
     // le pourcentage ne reste jamais figé : il avance doucement entre deux vrais signaux du moteur de lecture
     const creep = setInterval(() => { if (cible >= 14 && cible < 86) cible += (86 - cible) * 0.014; }, 250);
-    const patience = setTimeout(() => { $('scan-statut').textContent = 'Lecture du texte… un peu plus longue sur ce téléphone'; }, 12000);
+    const patience = setTimeout(() => { $('scan-statut').textContent = t('s.st.long'); }, 12000);
     try {
       cible = 6;
       const { bandes, mixte } = await preparer(fichier); if (annule) return;
@@ -245,28 +285,27 @@
       const texte = (await lireImages(bandes, mixte) || '').trim(); if (annule) return;
       if (texte.replace(/\s/g, '').length < 12) {
         finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
-        erreur("Vigie n'a pas pu lire de texte sur cette photo. Reprenez-la plus près, bien droite et bien éclairée, ou collez le texte.");
+        erreur(t('err.illisible'));
         return;
       }
       $('texte').value = texte;
       await conclure(texte, true);
     } catch (e) {
       finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
-      erreur(e && e.message === 'delai' ? "La lecture prend trop de temps sur ce téléphone. Essayez avec une photo plus petite, ou collez le texte du message."
-        : 'La lecture de la photo a échoué. Réessayez, ou collez le texte du message.');
+      erreur(t(e && e.message === 'delai' ? 'err.delai' : 'err.echec'));
     } finally { clearInterval(creep); clearTimeout(patience); URL.revokeObjectURL(url); reinitialiser(); }
   }
 
   async function analyserTexte(texte) {
     demarrerScan(null, texte);
     cible = 24; await attendre(22); if (annule) return;
-    etape(1, 'Lecture du texte…'); cible = 55; await attendre(52); if (annule) return;
+    etape(1, t('s.st.lecture')); cible = 55; await attendre(52); if (annule) return;
     await conclure(texte, false);
   }
 
   /* ================= Historique (local, facultatif) ================= */
   const CLE_H = 'vigie.historique';
-  const LIBELLE = { rouge: 'Arnaque probable', orange: 'Prudence', vert: 'Aucun signe connu' };
+  const LIBELLE = (v) => t('v.' + (v === 'rouge' ? 'rouge' : v === 'orange' ? 'orange' : 'vert') + '.etiq');
   const histo = () => lire(CLE_H, []);
   function ajouterHisto(texte, photo, verdict) {
     if (!prefs.historique) return;
@@ -276,13 +315,11 @@
   function rendreHistorique() {
     const l = histo(), zone = $('histo-liste');
     $('histo-effacer').hidden = l.length === 0;
-    $('histo-intro').textContent = l.length ? 'Les messages déjà vérifiés. Touchez-en un pour revoir le résultat.'
-      : (prefs.historique ? "Rien pour l'instant. Les messages que vous vérifiez apparaîtront ici, sur ce téléphone seulement."
-        : "L'historique est désactivé. Vous pouvez l'activer dans les réglages.");
+    $('histo-intro').textContent = t(l.length ? 'h.intro' : (prefs.historique ? 'h.vide' : 'h.desactive'));
     zone.innerHTML = l.map((e) => {
-      const d = new Date(e.id).toLocaleString('fr-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const d = new Date(e.id).toLocaleString(DATE[prefs.langue], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
       const extrait = e.t.replace(/\s+/g, ' ').slice(0, 90);
-      return '<button class="h-item ' + e.v + '" type="button" data-id="' + e.id + '"><span class="h-tete"><b>' + LIBELLE[e.v] + '</b><span>' + esc(d) + (e.p ? ' · photo' : '') +
+      return '<button class="h-item ' + e.v + '" type="button" data-id="' + e.id + '"><span class="h-tete"><b>' + LIBELLE(e.v) + '</b><span>' + esc(d) + (e.p ? ' · ' + t('h.photo') : '') +
         '</span></span><span class="h-texte">' + esc(extrait) + '</span></button>';
     }).join('');
   }
@@ -293,57 +330,51 @@
   });
   let confirmerEffacement = 0;
   $('histo-effacer').addEventListener('click', () => {
-    const lib = $('histo-effacer').lastChild;
-    if (!confirmerEffacement) { confirmerEffacement = 1; lib.textContent = "Confirmer l'effacement"; setTimeout(() => { confirmerEffacement = 0; lib.textContent = "Effacer l'historique"; }, 4000); return; }
-    confirmerEffacement = 0; lib.textContent = "Effacer l'historique"; ecrire(CLE_H, []); rendreHistorique();
+    const lib = $('histo-effacer-txt');
+    if (!confirmerEffacement) { confirmerEffacement = 1; lib.dataset.attente = '1'; lib.textContent = t('h.confirmer'); setTimeout(() => { confirmerEffacement = 0; delete lib.dataset.attente; lib.textContent = t('h.effacer'); }, 4000); return; }
+    confirmerEffacement = 0; delete lib.dataset.attente; lib.textContent = t('h.effacer'); ecrire(CLE_H, []); rendreHistorique();
   });
 
   /* ================= Résultat ================= */
-  const TITRES = {
-    rouge: ['Arnaque probable', 'Ne faites rien avec ce message', 'Ce message ressemble fortement à une arnaque. Ne cliquez pas, ne répondez pas.', 'danger', 'Élevé', 3],
-    orange: ['Prudence', "Vérifiez avant d'agir", "Certains indices sont inquiétants. Ne cliquez pas sur le lien tant que vous n'avez pas vérifié.", 'attention', 'Moyen', 2],
-    vert: ['Aucun signe connu', 'Pas de piège détecté', "Vigie n'a trouvé aucun indice d'arnaque. Ce n'est pas une garantie : restez attentif.", 'ok', 'Faible', 1]
-  };
+  const ICONE = { rouge: 'danger', orange: 'attention', vert: 'ok' }, NIVEAU = { rouge: 3, orange: 2, vert: 1 };
   function afficher(texte, depuisPhoto, empiler, enregistrer) {
-    const r = analyser(texte), t = TITRES[r.verdict], c = R.conseils[r.verdict], a = aidant();
+    const r = analyser(texte), v = r.verdict, n = NIVEAU[v], nbConseils = R.conseils[v].length;
+    const conseils = []; for (let i = 0; i < nbConseils; i++) conseils.push(t('c.' + v + '.' + i));
     dernier = { t: texte, p: depuisPhoto };
-    if (enregistrer) ajouterHisto(texte, depuisPhoto, r.verdict);
-    let h = '<section class="verdict ' + r.verdict + '" id="reponse" aria-live="polite"><div class="verdict-tete"><svg aria-hidden="true"><use href="#i-' + t[3] + '"/></svg><div>' +
-      '<div class="verdict-etiquette">' + t[0] + '</div><h1>' + t[1] + '</h1></div></div><p>' + t[2] + '</p>' +
-      '<div class="niveau" role="img" aria-label="Niveau de risque : ' + t[4] + '"><span class="niveau-lib">Niveau de risque : <b>' + t[4] + '</b></span>' +
-      '<span class="niveau-barre n' + t[5] + '"><i></i><i></i><i></i></span></div></section>';
-    if (r.verdict !== 'vert') h += '<div class="actions">' + (a
-      ? '<a class="btn btn-appel" href="tel:' + esc(chiffres(a.tel)) + '"><svg aria-hidden="true"><use href="#i-tel"/></svg>Appeler ' + esc(a.nom) + '</a>'
-      : '<button class="btn btn-camera" type="button" id="choisir-aidant"><svg aria-hidden="true"><use href="#i-tel"/></svg>Choisir ma personne de confiance</button>') + '</div>';
-    h += '<section class="carte"><h2>Que faire maintenant ?</h2><ol class="etapes">' + c.slice(0, 3).map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol>';
-    if (c.length > 3) h += '<div class="encadre">' + c.slice(3).map((x) => '<p>' + esc(x) + '</p>').join('') + '</div>';
+    if (enregistrer) ajouterHisto(texte, depuisPhoto, v);
+    const lib = t('niv.' + n);
+    let h = '<section class="verdict ' + v + '" id="reponse" aria-live="polite"><div class="verdict-tete"><svg aria-hidden="true"><use href="#i-' + ICONE[v] + '"/></svg><div>' +
+      '<div class="verdict-etiquette">' + esc(t('v.' + v + '.etiq')) + '</div><h1>' + esc(t('v.' + v + '.titre')) + '</h1></div></div><p>' + esc(t('v.' + v + '.texte')) + '</p>' +
+      '<div class="niveau" role="img" aria-label="' + esc(t('niv.titre') + ' : ' + lib) + '"><span class="niveau-lib">' + esc(t('niv.titre')) + ' : <b>' + esc(lib) + '</b></span>' +
+      '<span class="niveau-barre n' + n + '"><i></i><i></i><i></i></span></div></section>';
+    h += '<section class="carte"><h2>' + esc(t('res.faire')) + '</h2><ol class="etapes">' + conseils.slice(0, 3).map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol>';
+    if (conseils.length > 3) h += '<div class="encadre">' + conseils.slice(3).map((x) => '<p>' + esc(x) + '</p>').join('') + '</div>';
     h += '</section>';
-    if (r.raisons.length) h += '<details' + (r.verdict !== 'vert' ? ' open' : '') + '><summary>Pourquoi Vigie pense cela</summary><div class="details-corps"><ul>' +
-      r.raisons.slice(0, 3).map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div></details>';
-    h += '<details><summary>' + (depuisPhoto ? 'Texte lu sur la photo' : 'Voir le message analysé') + '</summary><div class="details-corps"><p class="message-brut">' + esc(texte) + '</p>' +
-      (depuisPhoto ? '<p class="note">Si le texte est faux, reprenez la photo plus près, bien droite et bien éclairée.</p>' : '') + '</div></details>';
-    h += '<div class="actions-duo"><button class="btn btn-secondaire" type="button" id="ecouter"><svg aria-hidden="true"><use href="#i-son"/></svg>Écouter</button>' +
-      '<button class="btn btn-secondaire" type="button" id="autre"><svg aria-hidden="true"><use href="#i-retour"/></svg>Autre message</button></div>';
+    if (r.raisons.length) h += '<details' + (v !== 'vert' ? ' open' : '') + '><summary>' + esc(t('res.pourquoi')) + '</summary><div class="details-corps"><ul>' +
+      r.raisons.slice(0, 3).map((x, i) => { const c = r.codes && r.codes[i]; return '<li>' + esc(c ? t(c.k, c.p) : x) + '</li>'; }).join('') + '</ul></div></details>';
+    h += '<details><summary>' + esc(t(depuisPhoto ? 'res.lu' : 'res.voir')) + '</summary><div class="details-corps"><p class="message-brut">' + esc(texte) + '</p>' +
+      (depuisPhoto ? '<p class="note">' + esc(t('res.reprendre')) + '</p>' : '') + '</div></details>';
+    h += '<div class="actions-duo"><button class="btn btn-secondaire" type="button" id="ecouter"><svg aria-hidden="true"><use href="#i-son"/></svg>' + esc(t('res.ecouter')) + '</button>' +
+      '<button class="btn btn-secondaire" type="button" id="autre"><svg aria-hidden="true"><use href="#i-retour"/></svg>' + esc(t('res.autre')) + '</button></div>';
     const corps = encodeURIComponent(texte.slice(0, 1500));
     h += '<div class="actions-duo" style="margin-top:12px">' +
-      (r.verdict !== 'vert' ? '<a class="btn btn-secondaire" href="mailto:suspect@safeonweb.be?subject=' + encodeURIComponent('Message suspect') + '&body=' + corps + '"><svg aria-hidden="true"><use href="#i-mail"/></svg>Signaler à Safeonweb</a>' : '') +
-      (navigator.share ? '<button class="btn btn-secondaire" type="button" id="partager"><svg aria-hidden="true"><use href="#i-partager"/></svg>Partager</button>' : '') + '</div>';
+      (v !== 'vert' ? '<a class="btn btn-secondaire" href="mailto:suspect@safeonweb.be?subject=' + encodeURIComponent(t('res.mail.sujet')) + '&body=' + corps + '"><svg aria-hidden="true"><use href="#i-mail"/></svg>' + esc(t('res.signaler')) + '</a>' : '') +
+      (navigator.share ? '<button class="btn btn-secondaire" type="button" id="partager"><svg aria-hidden="true"><use href="#i-partager"/></svg>' + esc(t('res.partager')) + '</button>' : '') + '</div>';
     $('vue-resultat').innerHTML = h;
     $('ecouter').onclick = () => parler($('reponse').innerText + '. ' + document.querySelector('ol.etapes').innerText);
     $('autre').onclick = () => { $('texte').value = ''; reinitialiser(); vue('accueil', true); };
-    if ($('choisir-aidant')) $('choisir-aidant').onclick = () => ouvrirConfiance();
-    if ($('partager')) $('partager').onclick = () => navigator.share({ title: 'Message vérifié avec Vigie', text: 'Vigie : ' + t[0] + '\n\n' + texte.slice(0, 1500) }).catch(() => {});
+    if ($('partager')) $('partager').onclick = () => navigator.share({ title: t('res.share.titre'), text: 'Vigie : ' + t('v.' + v + '.etiq') + '\n\n' + texte.slice(0, 1500) }).catch(() => {});
     vue('resultat', empiler !== false);
-    if (enregistrer && prefs.voix) parler(t[0] + '. ' + t[1] + '. ' + c.slice(0, 3).join(' '));
+    if (enregistrer && prefs.voix) parler(t('v.' + v + '.etiq') + '. ' + t('v.' + v + '.titre') + '. ' + conseils.slice(0, 3).join(' '));
   }
 
   /* ================= Voix ================= */
   function parler(texte) {
     const P = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.TextToSpeech;
-    if (P && P.speak) { P.stop().catch(() => {}); P.speak({ text: texte, lang: 'fr-BE', rate: 0.9 }).catch(() => synthese(texte)); } else synthese(texte);
+    if (P && P.speak) { P.stop().catch(() => {}); P.speak({ text: texte, lang: PARLE[prefs.langue], rate: 0.9 }).catch(() => synthese(texte)); } else synthese(texte);
   }
   function synthese(texte) {
-    try { const u = new SpeechSynthesisUtterance(texte); u.lang = 'fr-BE'; u.rate = 0.9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* pas de voix disponible */ }
+    try { const u = new SpeechSynthesisUtterance(texte); u.lang = PARLE[prefs.langue]; u.rate = 0.9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* pas de voix disponible */ }
   }
 
   /* ================= Formulaire ================= */
@@ -359,77 +390,48 @@
   $('formulaire').addEventListener('submit', (e) => {
     e.preventDefault();
     const texte = $('texte').value.trim();
-    if (!texte) { erreur('Collez d’abord le message, ou prenez-le en photo.'); $('texte').focus(); return; }
+    if (!texte) { erreur(t('err.vide')); $('texte').focus(); return; }
     if (analyser) analyserTexte(texte);
   });
 
-  /* ================= Personne de confiance : choix ================= */
-  const erreurReglages = (m) => { $('erreur-reglages').hidden = !m; $('erreur-reglages-texte').textContent = m || ''; };
-  function ouvrirConfiance() {
-    const a = aidant(); erreurReglages('');
-    $('aidant-actuel').hidden = !a; $('aidant-retirer').hidden = !a;
-    if (a) { $('aidant-actuel-nom').textContent = a.nom; $('aidant-actuel-tel').textContent = a.tel; $('aidant-nom').value = a.nom; $('aidant-tel').value = a.tel; }
-    vue('confiance', true);
-  }
-  function enregistrer(nom, tel) {
-    ecrire('vigie.aidant', { nom: (nom || '').trim() || 'mon contact', tel: tel.trim() });
-    majAidant(); history.back();
-  }
-  $('reg-aidant-btn').addEventListener('click', ouvrirConfiance);
-  $('aidant-contacts').addEventListener('click', () => {
-    erreurReglages('');
-    const P = window.Capacitor && Capacitor.registerPlugin ? Capacitor.registerPlugin('SelecteurContact') : null;
-    const choix = P ? P.choisir() : (navigator.contacts && navigator.contacts.select
-      ? navigator.contacts.select(['name', 'tel'], { multiple: false }).then((r) => ({ nom: r[0] && r[0].name && r[0].name[0], tel: r[0] && r[0].tel && r[0].tel[0] }))
-      : Promise.reject(new Error('indisponible')));
-    choix.then((c) => {
-      if (c && c.tel) enregistrer(c.nom, c.tel); else erreurReglages("Ce contact n'a pas de numéro de téléphone. Choisissez-en un autre.");
-    }).catch((e) => {
-      if (e && /annul|cancel/i.test(e.message || '')) return;
-      erreurReglages("Impossible d'ouvrir vos contacts. Saisissez le numéro à la main, juste en dessous.");
-      document.querySelector('details.saisie').open = true;
-    });
-  });
-  $('form-reglages').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const tel = $('aidant-tel').value.trim();
-    if (!/^\+?[\d\s().-]{6,20}$/.test(tel)) { erreurReglages('Ce numéro ne semble pas valide.'); $('aidant-tel').focus(); return; }
-    enregistrer($('aidant-nom').value, tel);
-  });
-  $('aidant-retirer').addEventListener('click', () => {
-    try { localStorage.removeItem('vigie.aidant'); } catch (x) { /* rien */ }
-    majAidant(); history.back();
-  });
-
-  /* ================= Réglages d'affichage, voix, à propos ================= */
+  /* ================= Réglages d'affichage, voix, langue, à propos ================= */
   document.querySelectorAll('button[data-taille]').forEach((b) => b.addEventListener('click', () => majPref('taille', b.dataset.taille)));
   document.querySelectorAll('button[data-theme]').forEach((b) => b.addEventListener('click', () => majPref('theme', b.dataset.theme)));
+  document.querySelectorAll('button[data-langue]').forEach((b) => b.addEventListener('click', () => majPref('langue', b.dataset.langue)));
   $('reg-voix').addEventListener('change', (e) => majPref('voix', e.target.checked));
   $('reg-histo').addEventListener('change', (e) => majPref('historique', e.target.checked));
   $('ouvrir-apropos').addEventListener('click', () => vue('apropos', true));
-  $('version').textContent = VERSION;
+  $('revoir-presentation').addEventListener('click', () => { vue('bienvenue', true); pasBienvenue(0, true); });
 
-  /* ================= Bienvenue (une seule fois) ================= */
+  /* ================= Présentation du premier lancement : carrousel ================= */
+  const piste = $('bv-piste'), NB = piste.children.length;
   let pas = 0;
-  function pasBienvenue() {
-    document.querySelectorAll('.bv-panneau').forEach((p) => p.classList.toggle('actif', Number(p.dataset.n) === pas));
+  function pasBienvenue(n, saut) {
+    if (typeof n === 'number') pas = n;
     document.querySelectorAll('.bv-points i').forEach((p, k) => p.classList.toggle('actif', k === pas));
-    $('bv-suivant').textContent = pas === 2 ? 'Choisir maintenant' : 'Suivant';
-    $('bv-plus-tard').hidden = pas !== 2;
+    $('bv-suivant').textContent = t(pas === NB - 1 ? 'b.commencer' : 'b.suivant');
+    $('bv-passer').hidden = pas === NB - 1;
+    if (saut) piste.scrollTo({ left: pas * piste.clientWidth, behavior: 'auto' });
   }
-  function finBienvenue(versConfiance) {
+  function finBienvenue() {
     ecrire('vigie.bienvenue', 1);
     vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
-    if (versConfiance) ouvrirConfiance();
   }
-  $('bv-suivant').addEventListener('click', () => { if (pas < 2) { pas++; pasBienvenue(); } else finBienvenue(true); });
-  $('bv-plus-tard').addEventListener('click', () => finBienvenue(false));
-
+  piste.addEventListener('scroll', () => {
+    const k = Math.round(piste.scrollLeft / Math.max(1, piste.clientWidth));
+    if (k !== pas && k >= 0 && k < NB) pasBienvenue(k);
+  }, { passive: true });
+  $('bv-suivant').addEventListener('click', () => {
+    if (pas >= NB - 1) { finBienvenue(); return; }
+    piste.scrollTo({ left: (pas + 1) * piste.clientWidth, behavior: 'smooth' });
+    pasBienvenue(pas + 1);
+  });
+  $('bv-passer').addEventListener('click', finBienvenue);
   /* ================= Démarrage ================= */
   fetch('regles.json').then((r) => r.json()).then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); })
-    .catch(() => erreur("Impossible de charger les règles de Vigie. Réinstallez l'application."));
-  appliquerPrefs(); majAidant();
+    .catch(() => erreur(t('err.regles')));
+  appliquerPrefs();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
-  if (!lire('vigie.bienvenue', 0)) { vue('bienvenue', false); pasBienvenue(); } else vue('accueil', false);
+  if (!lire('vigie.bienvenue', 0)) { vue('bienvenue', false); pasBienvenue(0); } else vue('accueil', false);
   window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages };   // pour les tests automatiques
 })();

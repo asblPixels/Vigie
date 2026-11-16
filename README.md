@@ -49,7 +49,6 @@ Vigie est pensée pour les personnes éloignées des outils numériques : un seu
 - **Hors ligne et privée.** Le message est analysé sur l'appareil. Il n'est envoyé nulle part.
 - **Transparente.** Les verdicts viennent de règles lisibles (`regles.py`), pas d'une boîte noire. Une IA locale facultative peut expliquer le résultat, jamais le décider.
 - **Pour tout le monde.** On peut photographier le message d'une autre personne : un parent, un voisin, un courrier reçu.
-- **Une personne de confiance, choisie par vous.** En cas de doute, Vigie propose d'appeler la personne que vous avez vous-même choisie dans vos contacts. Personne d'autre.
 
 ## Dans l'application Android
 
@@ -58,7 +57,7 @@ Vigie est pensée pour les personnes éloignées des outils numériques : un seu
 - **Historique** des messages vérifiés, gardé sur le téléphone, désactivable et effaçable en un geste.
 - **Aide** : que faire si l'on a cliqué, donné ses codes, payé ou reçu un faux appel de banque ; numéros utiles.
 - **Signaler à Safeonweb** et **partager** le résultat en un geste.
-- **Réglages** : taille du texte (3 niveaux), thème clair, sombre ou automatique, lecture à voix haute, personne de confiance.
+- **Réglages** : taille du texte (3 niveaux), thème clair, sombre ou automatique, lecture à voix haute, langue (français, néerlandais, italien, allemand).
 
 ## Installer
 
@@ -86,11 +85,9 @@ python3 app.py --telephone    # affiche une adresse et un QR code à scanner (m�
 
 Ouvrez l'adresse dans Safari, puis « Ajouter à l'écran d'accueil ». Une application iPhone native n'existe pas encore (voir la feuille de route).
 
-## Votre personne de confiance
+## Autorisations Android
 
-Vigie ne propose jamais d'appeler un numéro qu'elle aurait choisi à votre place. Dans **Réglages → Ma personne de confiance**, vous choisissez un contact de votre répertoire, ou vous saisissez un numéro à la main. Il est stocké uniquement sur votre appareil.
-
-Sur Android, la sélection passe par le sélecteur de contacts du système : Vigie ne reçoit que le contact choisi, et n'a **pas** l'autorisation de lire votre répertoire.
+Vigie demande le strict minimum : l'**appareil photo**, seulement quand vous touchez « Prendre en photo ». Elle ne demande ni contacts, ni micro, ni position, ni stockage, ni SMS, ni notifications. L'accès à Internet est déclaré par le cadre technique d'Android, mais Vigie n'envoie aucune donnée. Le détail figure dans l'application, sous Réglages → À propos et mentions légales (mentions légales, droits RGPD, autorisations).
 
 ## Vie privée
 
@@ -98,7 +95,6 @@ Sur Android, la sélection passe par le sélecteur de contacts du système : Vig
 |---|---|
 | Texte du message | Analysé sur l'appareil, jamais envoyé |
 | Photo | Lue sur l'appareil ; Vigie n'en conserve aucune copie |
-| Personne de confiance | Stockée sur l'appareil uniquement |
 | Historique | Sur l'appareil uniquement, désactivable, effaçable |
 | Statistiques, cookies, comptes | Aucun |
 
@@ -111,7 +107,7 @@ L'application Android impose en outre une politique de sécurité (CSP) qui inte
 | Détection | Règles lisibles : marques et domaines officiels, raccourcisseurs de liens, extensions suspectes, vocabulaire de pression (`regles.py`) |
 | Même verdict partout | Les règles sont exportées vers le téléphone (`regles.json`) ; `outils/verifier_parite.py` prouve que PC et Android répondent à l'identique |
 | Lecture des photos | Tesseract (PC) · Tesseract.js embarqué avec la langue française (Android) |
-| Application Android | Capacitor 8, sélecteur de contacts natif, synthèse vocale |
+| Application Android | Capacitor 8, synthèse vocale |
 | Interface | Une seule feuille de style pour le PC et Android, thème clair et sombre, police Atkinson Hyperlegible Next |
 | IA facultative (PC) | Ollama en local (`qwen2.5:3b`) : explique, ne décide jamais |
 
@@ -131,10 +127,10 @@ L'APK est construit par GitHub Actions (`.github/workflows/android.yml`) à chaq
 ## Feuille de route
 
 - [x] Prototype PC, interface repensée, appareil photo iOS et Android
-- [x] Application Android autonome (règles, lecture des photos, voix, contact de confiance)
+- [x] Application Android autonome (règles, lecture des photos, voix, 4 langues)
 - [ ] Test sur appareils réels et signature de l'APK pour distribution
 - [ ] Application iPhone
-- [ ] Interface en néerlandais, italien et allemand
+- [x] Interface en néerlandais, italien et allemand
 - [ ] Règles enrichies avec les campagnes d'arnaques belges récentes
 
 ## Qui est derrière Vigie

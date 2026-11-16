@@ -8,7 +8,7 @@ Merci de votre aide. Vigie sert des personnes qui n'ont pas droit à l'erreur : 
 2. **Hors ligne par défaut.** Aucune requête réseau, aucun traceur, aucune dépendance qui appelle un service extérieur.
 3. **Des règles lisibles.** Une détection s'ajoute dans `regles.py` avec sa raison en français simple ; l'IA n'est jamais juge.
 4. **Accessibilité.** Texte de 20 px au minimum, contraste AA, boutons de 56 px de haut, thème clair et sombre.
-5. **Aucune personne désignée à la place de l'utilisateur.** Le contact de confiance est toujours choisi par lui.
+5. **Aucune assistance ni numéro imposé.** Vigie ne désigne personne à appeler et ne reçoit aucun message de l'utilisateur.
 
 ## Proposer une règle
 

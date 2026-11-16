@@ -4,8 +4,6 @@ Lancement :  python3 app.py   puis ouvrir http://127.0.0.1:5000
 Tout reste sur l'ordinateur : OCR avec Tesseract, explication avec Ollama (facultatif).
 
 Configuration (variables d'environnement, toutes facultatives) :
-  VIGIE_AIDANT_NOM   nom de la personne de confiance        (facultatif, aucune valeur par défaut)
-  VIGIE_AIDANT_TEL   téléphone de la personne de confiance  (facultatif, aucune valeur par défaut)
   VIGIE_MODELE       modèle Ollama            (défaut : qwen2.5:3b)
   VIGIE_OLLAMA       adresse d'Ollama         (défaut : http://127.0.0.1:11434)
   VIGIE_HOTE         adresse d'écoute         (défaut : 127.0.0.1 ; 0.0.0.0 = accès smartphone)
@@ -34,8 +32,6 @@ try:  # facultatif : améliore la lecture des photos prises au téléphone
 except ImportError:
     Image = None
 
-AIDANT_NOM = os.environ.get("VIGIE_AIDANT_NOM", "")
-AIDANT_TEL = os.environ.get("VIGIE_AIDANT_TEL", "")
 MODELE = os.environ.get("VIGIE_MODELE", "qwen2.5:3b")
 OLLAMA = os.environ.get("VIGIE_OLLAMA", "http://127.0.0.1:11434")
 TESSERACT = os.environ.get("VIGIE_TESSERACT", "tesseract")  # Windows : chemin complet de tesseract.exe
@@ -113,7 +109,7 @@ def expliquer_ia(texte: str, resultat: dict) -> str | None:
 
 @app.route("/", methods=["GET", "POST"])
 def accueil():
-    contexte = {"aidant_nom": AIDANT_NOM, "aidant_tel": AIDANT_TEL, "resultat": None,
+    contexte = {"resultat": None,
                 "texte": "", "erreur": None, "ia": None, "conseils": []}
     if request.method == "POST":
         texte = (request.form.get("texte") or "").strip()
@@ -137,7 +133,7 @@ def accueil():
 MANIFESTE = {
     "name": "Vigie — Est-ce une arnaque ?",
     "short_name": "Vigie",
-    "description": "Vérifiez gratuitement si un message est une arnaque. Par Pixel's ASBL.",
+    "description": "Vérifiez gratuitement si un message est une arnaque.",
     "lang": "fr-BE",
     "start_url": "/",
     "scope": "/",
@@ -190,7 +186,7 @@ def hors_ligne():
 
 @app.errorhandler(413)
 def trop_gros(_):
-    return render_template_string(PAGE, aidant_nom=AIDANT_NOM, aidant_tel=AIDANT_TEL, resultat=None,
+    return render_template_string(PAGE, resultat=None,
                                   texte="", ia=None, conseils=[],
                                   erreur="La photo est trop lourde (10 Mo maximum)."), 413
 
@@ -199,7 +195,7 @@ PAGE = """<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0E2A38">
-<meta name="description" content="Vigie, de Pixel's ASBL : vérifiez gratuitement si un message est une arnaque.">
+<meta name="description" content="Vigie : vérifiez gratuitement si un message est une arnaque.">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/static/logo-icone.svg" type="image/svg+xml">
 <link rel="icon" href="/static/icone-32.png" sizes="32x32">
@@ -224,9 +220,8 @@ PAGE = """<!doctype html>
 <header class="bandeau"><div class="bandeau-int">
   <a class="marque" href="/" aria-label="Vigie, accueil">
     <picture><source media="(prefers-color-scheme: dark)" srcset="/static/logo-icone-sombre.svg"><img src="/static/logo-icone.svg" alt="" width="44" height="44"></picture>
-    <span><b>Vigie</b><small>par Pixel's ASBL</small></span>
+    <span><b>Vigie</b><small>Anti-arnaque</small></span>
   </a>
-  <a class="aide" id="aide-haut" href="#" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg><span>Ma personne de confiance</span></a>
 </div></header>
 
 <div class="page">
@@ -254,10 +249,6 @@ PAGE = """<!doctype html>
   </section>
 
   {% if resultat.verdict != 'vert' %}
-  <div class="actions" id="zone-aidant">
-    <a class="btn btn-appel" id="appel" href="#" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg><span></span></a>
-    <button class="btn btn-camera" type="button" id="choisir-aidant" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg>Choisir ma personne de confiance</button>
-  </div>
   {% endif %}
 
   <section class="carte">
@@ -317,19 +308,9 @@ PAGE = """<!doctype html>
 </main>
 
 <footer class="pied">
-  <p class="signature"><picture><source media="(prefers-color-scheme: dark)" srcset="/static/logo-icone-sombre.svg"><img src="/static/logo-icone.svg" alt=""></picture>Vigie · logiciel libre conçu par Pixel's ASBL, Boussu</p>
+  <p class="signature">Vigie · logiciel libre GPL-3.0</p>
   <p>Gratuit, sans compte, sans publicité. Rien n'est envoyé sur Internet. Vigie est une aide, pas une garantie.</p>
-  <p>Logiciel libre conçu par Pixel's ASBL (Boussu). Pixel's ASBL ne reçoit aucun message et n'assure pas d'assistance par cette application.</p>
-  <details id="panneau-aidant">
-    <summary>Ma personne de confiance</summary>
-    <div class="details-corps">
-      <p>En cas de doute, Vigie vous propose d'appeler la personne que <b>vous</b> choisissez : un proche, un voisin… Son numéro reste sur cet appareil.</p>
-      <button class="btn btn-camera" type="button" id="aidant-contacts" hidden><svg aria-hidden="true"><use href="#i-tel"/></svg>Choisir dans mes contacts</button>
-      <label class="champ"><span>Nom</span><input id="aidant-nom" autocomplete="off" maxlength="40"></label>
-      <label class="champ"><span>Numéro de téléphone</span><input id="aidant-tel" type="tel" inputmode="tel" autocomplete="off" maxlength="20"></label>
-      <div class="actions-duo"><button class="btn btn-principal" type="button" id="aidant-enregistrer" style="margin-top:0">Enregistrer</button><button class="btn btn-secondaire" type="button" id="aidant-retirer">Retirer</button></div>
-    </div>
-  </details>
+
   <details>
     <summary>Numéros utiles</summary>
     <ul class="numeros">
@@ -398,48 +379,10 @@ PAGE = """<!doctype html>
     }).catch(function(){ f.submit(); });
   });
 })();
-{{ js_aidant|safe }}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}
 function lire(){try{var z=document.getElementById('reponse').innerText+'. '+document.querySelector('ol.etapes').innerText;var u=new SpeechSynthesisUtterance(z);u.lang='fr-BE';u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 </script>
 </body></html>"""
-
-JS_AIDANT = r"""
-(function(){
-  var DEF={nom:__NOM__,tel:__TEL__}; // facultatif : préréglage posé par la personne qui installe Vigie pour un proche
-  function lire_(){try{var a=JSON.parse(localStorage.getItem('vigie.aidant'));if(a&&a.tel)return a;}catch(e){}return DEF.tel?DEF:null;}
-  function nettoyer(t){return String(t||'').replace(/[^+\d]/g,'');}
-  var haut=document.getElementById('aide-haut'),appel=document.getElementById('appel'),choisir=document.getElementById('choisir-aidant');
-  function afficher(){
-    var a=lire_();
-    if(haut){if(a){haut.hidden=false;haut.href='tel:'+nettoyer(a.tel);haut.lastChild.textContent='Appeler '+a.nom;}else{haut.hidden=true;}}
-    if(appel&&choisir){appel.hidden=!a;choisir.hidden=!!a;if(a){appel.href='tel:'+nettoyer(a.tel);appel.lastChild.textContent='Appeler '+a.nom;}}
-  }
-  var pn=document.getElementById('panneau-aidant'),nom=document.getElementById('aidant-nom'),tel=document.getElementById('aidant-tel'),btnC=document.getElementById('aidant-contacts');
-  function ouvrir(){if(!pn)return;var a=lire_();nom.value=a?a.nom:'';tel.value=a?a.tel:'';pn.open=true;pn.scrollIntoView({behavior:'smooth',block:'center'});}
-  if(choisir)choisir.addEventListener('click',ouvrir);
-  if(navigator.contacts&&navigator.contacts.select&&btnC){
-    btnC.hidden=false;
-    btnC.addEventListener('click',function(){
-      navigator.contacts.select(['name','tel'],{multiple:false}).then(function(r){
-        if(r&&r[0]){nom.value=(r[0].name&&r[0].name[0])||'';tel.value=(r[0].tel&&r[0].tel[0])||'';}
-      }).catch(function(){});
-    });
-  }
-  if(pn){
-    pn.addEventListener('toggle',function(){if(pn.open){var a=lire_();if(!nom.value&&!tel.value&&a){nom.value=a.nom;tel.value=a.tel;}}});
-    document.getElementById('aidant-enregistrer').addEventListener('click',function(){
-      if(!/^\+?[\d\s().-]{6,20}$/.test(tel.value.trim())){tel.focus();return;}
-      try{localStorage.setItem('vigie.aidant',JSON.stringify({nom:nom.value.trim()||'mon contact',tel:tel.value.trim()}));}catch(e){}
-      afficher();pn.open=false;
-    });
-    document.getElementById('aidant-retirer').addEventListener('click',function(){try{localStorage.removeItem('vigie.aidant');}catch(e){}nom.value='';tel.value='';afficher();});
-  }
-  afficher();
-})();
-"""
-JS_AIDANT = JS_AIDANT.replace("__NOM__", json.dumps(AIDANT_NOM)).replace("__TEL__", json.dumps(AIDANT_TEL))
-PAGE = PAGE.replace("{{ js_aidant|safe }}", JS_AIDANT)
 
 def adresse_locale() -> str:
     """Adresse du PC sur le Wi-Fi (aucun paquet n'est envoyé)."""
