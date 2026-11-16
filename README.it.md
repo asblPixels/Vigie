@@ -51,6 +51,15 @@ Vigie è pensata per chi usa poco gli strumenti digitali: una sola schermata, un
 - **Per tutti.** Si può fotografare il messaggio di un'altra persona: un genitore, un vicino, una lettera ricevuta.
 - **Una persona di fiducia scelta da te.** In caso di dubbio Vigie propone di chiamare la persona che hai scelto tu stesso tra i tuoi contatti. Nessun altro.
 
+## Nell'app Android
+
+- **Analisi animata**: percentuale a grandi cifre, fascio di scansione sulla foto, passaggi visibili a schermo.
+- **Livello di rischio** chiaro (basso, medio, alto) e tre gesti da fare.
+- **Cronologia** dei messaggi verificati, conservata sul telefono, disattivabile e cancellabile con un tocco.
+- **Aiuto**: cosa fare se si è cliccato, si sono dati i codici, si è pagato o si è ricevuta una finta telefonata della banca; numeri utili.
+- **Segnala a Safeonweb** e **condividi** il risultato con un tocco.
+- **Impostazioni**: dimensione del testo (3 livelli), tema chiaro, scuro o automatico, lettura ad alta voce, persona di fiducia.
+
 ## Installare
 
 ### Android (app autonoma)
@@ -90,6 +99,7 @@ Su Android la scelta passa dal selettore di contatti del sistema: Vigie riceve s
 | Testo del messaggio | Analizzato sul dispositivo, mai inviato |
 | Foto | Letta sul dispositivo; Vigie non ne conserva alcuna copia |
 | Persona di fiducia | Salvata solo sul dispositivo |
+| Cronologia | Solo sul dispositivo, disattivabile e cancellabile |
 | Statistiche, cookie, account | Nessuno |
 
 L'app Android impone inoltre una politica di sicurezza (CSP) che vieta il caricamento di contenuti esterni e non include alcun tracker.

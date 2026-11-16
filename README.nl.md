@@ -51,6 +51,15 @@ Vigie is gemaakt voor mensen die weinig met digitale hulpmiddelen werken: één 
 - **Voor iedereen.** U mag het bericht van iemand anders fotograferen: een ouder, een buur, een ontvangen brief.
 - **Een vertrouwenspersoon die u zelf kiest.** Bij twijfel stelt Vigie voor de persoon te bellen die u zelf uit uw contacten koos. Niemand anders.
 
+## In de Android-app
+
+- **Geanimeerde analyse**: percentage in grote cijfers, scanbalk over de foto, stappen die u op het scherm volgt.
+- Duidelijk **risiconiveau** (laag, middel, hoog) en drie stappen om te doen.
+- **Geschiedenis** van gecontroleerde berichten, bewaard op de telefoon, uit te schakelen en met één tik te wissen.
+- **Hulp**: wat te doen na een klik, na het geven van codes, na een betaling of na een valse bankoproep; nuttige nummers.
+- **Melden aan Safeonweb** en het resultaat **delen** met één tik.
+- **Instellingen**: tekstgrootte (3 niveaus), licht, donker of automatisch thema, voorlezen, vertrouwenspersoon.
+
 ## Installeren
 
 ### Android (zelfstandige app)
@@ -90,6 +99,7 @@ Op Android verloopt de keuze via de contactkiezer van het systeem: Vigie ontvang
 | Tekst van het bericht | Op het toestel geanalyseerd, nooit verstuurd |
 | Foto | Op het toestel gelezen; Vigie bewaart er geen kopie van |
 | Vertrouwenspersoon | Alleen op het toestel bewaard |
+| Geschiedenis | Alleen op het toestel, uit te schakelen en te wissen |
 | Statistieken, cookies, accounts | Geen |
 
 De Android-app dwingt bovendien een beveiligingsbeleid (CSP) af dat het laden van externe inhoud verbiedt, en bevat geen trackers.

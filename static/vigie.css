@@ -122,9 +122,10 @@ details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
 .numeros{list-style:none;padding:0;margin:4px 0 0}.numeros li{margin:4px 0}
 
 
-/* ---------- Thème sombre : couleurs de la marque conservées, logo cerclé de menthe ---------- */
+/* ---------- Thème sombre : couleurs de la marque conservées, logo cerclé de menthe ----------
+   Appliqué automatiquement (réglage du téléphone) ou forcé par data-theme="sombre". */
 @media (prefers-color-scheme:dark){
-  :root{
+  :root:not([data-theme="clair"]){
     --bg:#08202B; --surface:#0F3040; --ink:#EAF4F6; --muted:#A9C0C9; --line:#2A4D5E; --line-doux:#1D3F50;
     --turquoise:#5EEAD4; --turquoise-fonce:#8FF3E2; --turquoise-pale:#0F3A45; --turquoise-bord:#2B6B6E;
     --nuit:#14B8A6; --nuit-2:#2DD4BF; --focus:#5EEAD4;
@@ -133,16 +134,39 @@ details[open] summary::after{transform:rotate(-135deg);margin-top:6px}
     --vert:#6EE7A8; --vert-bg:#0F2F22; --vert-line:#25664A;
     --ombre:none; color-scheme:dark;
   }
-  .btn-principal,.btn-principal:hover{color:#04222B}
-  .btn-appel{background:#14B8A6;color:#04222B;box-shadow:none}.btn-appel:hover{background:#2DD4BF}
-  .btn-camera{color:var(--ink)}
-  ol.etapes li::before{color:#04222B}
-  textarea,.champ input{background:#0A2531;border-color:#3A6072;color:var(--ink)}
-  textarea::placeholder{color:#7FA0AC}
-  .encadre,.message-brut{background:#0A2531;border-color:var(--line-doux)}
-  .btn-secondaire{border-color:#3A6072}
-  .bandeau::before{background:linear-gradient(90deg,#14B8A6 0%,#2DD4BF 50%,#5EEAD4 100%)}
+  :root:not([data-theme="clair"]) .btn-principal,:root:not([data-theme="clair"]) .btn-principal:hover{color:#04222B}
+  :root:not([data-theme="clair"]) .btn-appel{background:#14B8A6;color:#04222B;box-shadow:none}
+  :root:not([data-theme="clair"]) .btn-appel:hover{background:#2DD4BF}
+  :root:not([data-theme="clair"]) .btn-camera{color:var(--ink)}
+  :root:not([data-theme="clair"]) ol.etapes li::before{color:#04222B}
+  :root:not([data-theme="clair"]) textarea,:root:not([data-theme="clair"]) .champ input{background:#0A2531;border-color:#3A6072;color:var(--ink)}
+  :root:not([data-theme="clair"]) textarea::placeholder{color:#7FA0AC}
+  :root:not([data-theme="clair"]) .encadre,:root:not([data-theme="clair"]) .message-brut{background:#0A2531;border-color:var(--line-doux)}
+  :root:not([data-theme="clair"]) .btn-secondaire{border-color:#3A6072}
+  :root:not([data-theme="clair"]) .bandeau::before{background:linear-gradient(90deg,#14B8A6 0%,#2DD4BF 50%,#5EEAD4 100%)}
 }
+:root[data-theme="sombre"]{
+    --bg:#08202B; --surface:#0F3040; --ink:#EAF4F6; --muted:#A9C0C9; --line:#2A4D5E; --line-doux:#1D3F50;
+    --turquoise:#5EEAD4; --turquoise-fonce:#8FF3E2; --turquoise-pale:#0F3A45; --turquoise-bord:#2B6B6E;
+    --nuit:#14B8A6; --nuit-2:#2DD4BF; --focus:#5EEAD4;
+    --rouge:#FF8A80; --rouge-bg:#3A1717; --rouge-line:#7A2E2A;
+    --orange:#FFC266; --orange-bg:#35260F; --orange-line:#7A5418;
+    --vert:#6EE7A8; --vert-bg:#0F2F22; --vert-line:#25664A;
+    --ombre:none; color-scheme:dark;
+  }
+  :root[data-theme="sombre"] .btn-principal,:root[data-theme="sombre"] .btn-principal:hover{color:#04222B}
+  :root[data-theme="sombre"] .btn-appel{background:#14B8A6;color:#04222B;box-shadow:none}
+  :root[data-theme="sombre"] .btn-appel:hover{background:#2DD4BF}
+  :root[data-theme="sombre"] .btn-camera{color:var(--ink)}
+  :root[data-theme="sombre"] ol.etapes li::before{color:#04222B}
+  :root[data-theme="sombre"] textarea,:root[data-theme="sombre"] .champ input{background:#0A2531;border-color:#3A6072;color:var(--ink)}
+  :root[data-theme="sombre"] textarea::placeholder{color:#7FA0AC}
+  :root[data-theme="sombre"] .encadre,:root[data-theme="sombre"] .message-brut{background:#0A2531;border-color:var(--line-doux)}
+  :root[data-theme="sombre"] .btn-secondaire{border-color:#3A6072}
+  :root[data-theme="sombre"] .bandeau::before{background:linear-gradient(90deg,#14B8A6 0%,#2DD4BF 50%,#5EEAD4 100%)}
+/* ---------- Taille du texte (réglage de l'utilisateur) ---------- */
+html[data-taille="grand"]{font-size:23px}
+html[data-taille="tres-grand"]{font-size:26px}
 
 @media (max-width:640px){textarea{min-height:130px}}
 @media (max-width:420px){html{font-size:19px}.carte,.verdict{padding:20px}.outils,.actions-duo{grid-template-columns:1fr}}

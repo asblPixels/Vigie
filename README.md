@@ -51,6 +51,15 @@ Vigie est pensée pour les personnes éloignées des outils numériques : un seu
 - **Pour tout le monde.** On peut photographier le message d'une autre personne : un parent, un voisin, un courrier reçu.
 - **Une personne de confiance, choisie par vous.** En cas de doute, Vigie propose d'appeler la personne que vous avez vous-même choisie dans vos contacts. Personne d'autre.
 
+## Dans l'application Android
+
+- **Analyse animée** : pourcentage en grands chiffres, faisceau de scan sur la photo, étapes lues à l'écran.
+- **Niveau de risque** clair (faible, moyen, élevé) et trois gestes à faire.
+- **Historique** des messages vérifiés, gardé sur le téléphone, désactivable et effaçable en un geste.
+- **Aide** : que faire si l'on a cliqué, donné ses codes, payé ou reçu un faux appel de banque ; numéros utiles.
+- **Signaler à Safeonweb** et **partager** le résultat en un geste.
+- **Réglages** : taille du texte (3 niveaux), thème clair, sombre ou automatique, lecture à voix haute, personne de confiance.
+
 ## Installer
 
 ### Android (application autonome)
@@ -90,6 +99,7 @@ Sur Android, la sélection passe par le sélecteur de contacts du système : Vig
 | Texte du message | Analysé sur l'appareil, jamais envoyé |
 | Photo | Lue sur l'appareil ; Vigie n'en conserve aucune copie |
 | Personne de confiance | Stockée sur l'appareil uniquement |
+| Historique | Sur l'appareil uniquement, désactivable, effaçable |
 | Statistiques, cookies, comptes | Aucun |
 
 L'application Android impose en outre une politique de sécurité (CSP) qui interdit tout chargement de contenu extérieur, et elle n'embarque aucun traceur.

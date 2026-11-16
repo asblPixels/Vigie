@@ -4,6 +4,7 @@
 <meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' blob: data:">
 <title>Vigie</title>
+<link rel="icon" href="img/logo-icone.svg" type="image/svg+xml">
 <link rel="stylesheet" href="vigie.css"><link rel="stylesheet" href="app.css">
 </head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -17,9 +18,16 @@
  <symbol id="i-ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="m8 12.5 2.8 2.8L16.5 9.5"/></symbol>
  <symbol id="i-son" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10H4Z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></g></symbol>
  <symbol id="i-retour" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 12H5m6-6-6 6 6 6"/></symbol>
+
+ <symbol id="i-historique" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v4.8h4.8"/><path d="M12 7.5V12l3 2"/></g></symbol>
+ <symbol id="i-aide" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></g></symbol>
+ <symbol id="i-reglages" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/></g></symbol>
+ <symbol id="i-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7.5 8.5 6 8.5-6"/></g></symbol>
+ <symbol id="i-partager" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="m8.3 10.8 7.4-3.6M8.3 13.2l7.4 3.6"/></g></symbol>
+ <symbol id="i-suppr" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></g></symbol>
 </defs></svg>
 <header class="bandeau"><div class="bandeau-int">
-  <a class="marque" href="#accueil" aria-label="Vigie, accueil">
+  <a class="marque" href="#accueil" id="marque" aria-label="Vigie, accueil">
     <picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt="" width="44" height="44"></picture>
     <span><b>Vigie</b><small>par Pixel's ASBL</small></span>
   </a>
@@ -28,6 +36,20 @@
 
 <div class="page"><main>
 
+<!-- ============ Bienvenue (première ouverture) ============ -->
+<section class="vue" id="vue-bienvenue">
+  <div class="bienvenue">
+    <div class="bv-logo"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt="" width="112" height="112"></picture></div>
+    <div class="bv-panneau actif" data-n="0"><span class="surtitre">Bienvenue</span><h1>Un message vous inquiète ?</h1><p class="intro">Vigie vous dit en quelques secondes s'il s'agit d'une arnaque, et ce qu'il faut faire.</p></div>
+    <div class="bv-panneau" data-n="1"><span class="surtitre">Vie privée</span><h1>Tout reste sur votre téléphone</h1><p class="intro">Pas de compte, pas de publicité, pas d'envoi sur Internet. Vigie lit le message et vous répond, c'est tout.</p></div>
+    <div class="bv-panneau" data-n="2"><span class="surtitre">Dernière étape</span><h1>Une personne de confiance</h1><p class="intro">Choisissez un proche à appeler en cas de doute. C'est vous qui décidez, dans vos propres contacts. Vous pouvez le faire plus tard.</p></div>
+    <div class="bv-points" aria-hidden="true"><i class="actif"></i><i></i><i></i></div>
+    <button class="btn btn-principal" type="button" id="bv-suivant">Suivant</button>
+    <button class="btn btn-secondaire" type="button" id="bv-plus-tard" hidden style="margin-top:12px">Plus tard</button>
+  </div>
+</section>
+
+<!-- ============ Vérifier ============ -->
 <section class="vue active" id="vue-accueil">
   <span class="surtitre">Vérification anti-arnaque</span>
   <h1>Un message vous inquiète ?</h1>
@@ -49,18 +71,107 @@
   </form>
 </section>
 
-<section class="vue" id="vue-lecture" aria-live="polite">
-  <div class="chargement">
-    <picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt="" width="96" height="96"></picture>
-    <h1 id="lecture-titre">Lecture de la photo…</h1>
-    <p class="intro" id="lecture-detail">Cela peut prendre une vingtaine de secondes. Rien ne quitte ce téléphone.</p>
-    <div class="barre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barre"><span id="barre-int"></span></div>
+<!-- ============ Analyse en cours ============ -->
+<section class="vue" id="vue-scan" aria-live="polite">
+  <span class="surtitre" id="scan-surtitre">Analyse en cours</span>
+  <div class="scan-carte" aria-hidden="true">
+    <img id="scan-photo" alt="" hidden>
+    <div class="scan-texte" id="scan-texte" hidden></div>
+    <div class="faisceau"></div>
+    <i class="coin h-g"></i><i class="coin h-d"></i><i class="coin b-g"></i><i class="coin b-d"></i>
   </div>
+  <div class="scan-chiffre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progression de l'analyse" id="barre">
+    <span id="scan-pct">0</span><small>%</small>
+  </div>
+  <div class="barre"><span id="barre-int"></span></div>
+  <p class="scan-statut" id="scan-statut">Préparation…</p>
+  <ol class="scan-etapes" id="scan-etapes">
+    <li><span id="etape-0-txt">Photo préparée</span></li>
+    <li><span>Lecture du texte</span></li>
+    <li><span>Recherche d'indices connus</span></li>
+    <li><span>Verdict</span></li>
+  </ol>
+  <button class="btn btn-secondaire" type="button" id="scan-annuler">Annuler</button>
 </section>
 
+<!-- ============ Résultat ============ -->
 <section class="vue" id="vue-resultat"></section>
 
+<!-- ============ Historique ============ -->
+<section class="vue" id="vue-historique">
+  <span class="surtitre">Sur ce téléphone</span>
+  <h1>Historique</h1>
+  <p class="intro" id="histo-intro">Les messages déjà vérifiés. Touchez-en un pour revoir le résultat.</p>
+  <div id="histo-liste"></div>
+  <button class="btn btn-secondaire" type="button" id="histo-effacer" hidden><svg aria-hidden="true"><use href="#i-suppr"/></svg><span>Effacer l'historique</span></button>
+</section>
+
+<!-- ============ Aide ============ -->
+<section class="vue" id="vue-aide">
+  <span class="surtitre">Si vous avez un doute</span>
+  <h1>Que faire si…</h1>
+  <details class="carte-ligne" open><summary>J'ai cliqué sur un lien</summary><div class="details-corps"><ul>
+    <li>Ne saisissez rien de plus : ni code, ni mot de passe.</li>
+    <li>Fermez la page. Si vous avez saisi un mot de passe, changez-le depuis le site officiel, tapé vous-même.</li>
+    <li>Surveillez vos comptes. En cas de doute, appelez votre banque.</li>
+  </ul></div></details>
+  <details class="carte-ligne"><summary>J'ai donné mes codes ou ma carte</summary><div class="details-corps"><ul>
+    <li><b>Appelez tout de suite Card Stop : 078 170 170</b> (24 h sur 24), pour bloquer la carte.</li>
+    <li>Prévenez ensuite votre banque.</li>
+    <li>Déposez plainte à la police locale, avec les messages en main.</li>
+  </ul></div></details>
+  <details class="carte-ligne"><summary>J'ai payé</summary><div class="details-corps"><ul>
+    <li>Contactez votre banque immédiatement : plus c'est rapide, plus il y a de chances d'arrêter le paiement.</li>
+    <li>Gardez les preuves : messages, captures, reçus.</li>
+    <li>Déposez plainte à la police locale.</li>
+  </ul></div></details>
+  <details class="carte-ligne"><summary>Quelqu'un m'appelle « de la banque »</summary><div class="details-corps"><ul>
+    <li>Raccrochez. Une vraie banque ne demande jamais vos codes, ni de « sécuriser » votre argent sur un autre compte.</li>
+    <li>Rappelez votre banque avec le numéro inscrit au dos de votre carte, pas celui qui s'affiche.</li>
+  </ul></div></details>
+  <h2 style="margin-top:28px">Numéros utiles</h2>
+  <div class="numeros-grille">
+    <a class="numero" href="tel:078170170"><b>Card Stop</b><span>078 170 170</span><small>Carte ou codes bancaires volés</small></a>
+    <a class="numero" href="tel:101"><b>Police</b><span>101</span><small>Urgence</small></a>
+    <a class="numero" href="tel:112"><b>Urgences</b><span>112</span><small>Danger immédiat</small></a>
+    <a class="numero" href="mailto:suspect@safeonweb.be"><b>Safeonweb</b><span>suspect@safeonweb.be</span><small>Transférer un message suspect</small></a>
+  </div>
+  <p class="note" style="margin-top:16px">Ces services sont indépendants de Vigie.</p>
+</section>
+
+<!-- ============ Réglages ============ -->
 <section class="vue" id="vue-reglages">
+  <span class="surtitre">Application</span>
+  <h1>Réglages</h1>
+
+  <div class="carte">
+    <h2>Ma personne de confiance</h2>
+    <p class="ligne-valeur" id="reg-aidant">Aucune personne choisie</p>
+    <button class="btn btn-camera" type="button" id="reg-aidant-btn"><svg aria-hidden="true"><use href="#i-tel"/></svg><span>Choisir</span></button>
+  </div>
+
+  <div class="carte">
+    <h2>Affichage</h2>
+    <p class="etiquette">Taille du texte</p>
+    <div class="seg" role="group" aria-label="Taille du texte">
+      <button type="button" data-taille="normal">Normal</button><button type="button" data-taille="grand">Grand</button><button type="button" data-taille="tres-grand">Très grand</button>
+    </div>
+    <p class="etiquette">Thème</p>
+    <div class="seg" role="group" aria-label="Thème">
+      <button type="button" data-theme="auto">Automatique</button><button type="button" data-theme="clair">Clair</button><button type="button" data-theme="sombre">Sombre</button>
+    </div>
+  </div>
+
+  <div class="carte">
+    <h2>Voix et historique</h2>
+    <label class="interrupteur"><span>Lire le résultat à voix haute</span><input type="checkbox" id="reg-voix"><i class="glissiere"></i></label>
+    <label class="interrupteur"><span>Garder l'historique sur ce téléphone</span><input type="checkbox" id="reg-histo"><i class="glissiere"></i></label>
+  </div>
+
+  <button class="btn btn-secondaire" type="button" id="ouvrir-apropos"><svg aria-hidden="true"><use href="#i-bouclier"/></svg>À propos de Vigie</button>
+</section>
+
+<section class="vue" id="vue-confiance">
   <span class="surtitre">Réglages</span>
   <h1>Ma personne de confiance</h1>
   <p class="intro">En cas de doute, Vigie vous propose de l'appeler. Choisissez-la vous-même : un proche, un voisin, un ami. Son numéro reste sur ce téléphone, et Vigie ne lit pas votre répertoire.</p>
@@ -80,22 +191,42 @@
   </div>
 </section>
 
+<section class="vue" id="vue-apropos">
+  <div class="apropos-tete"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt="" width="96" height="96"></picture><h1>Vigie</h1><p class="note">Version <span id="version">0.2.0</span> · logiciel libre GPL-3.0</p></div>
+  <div class="carte">
+    <h2>Ce que fait Vigie</h2>
+    <p>Elle lit un message ou une photo, cherche des indices d'arnaque connus (faux liens, fausses marques, pression, demandes de codes) et vous dit quoi faire.</p>
+    <p>Elle ne décide pas à votre place et ne remplace pas votre vigilance : l'absence de signal n'est pas une garantie.</p>
+  </div>
+  <div class="carte">
+    <h2>Votre vie privée</h2>
+    <ul class="points">
+      <li>Le message et la photo sont lus sur ce téléphone, jamais envoyés.</li>
+      <li>Pas de compte, pas de publicité, pas de statistiques.</li>
+      <li>La personne de confiance et l'historique restent sur ce téléphone.</li>
+      <li>Vigie n'a pas accès à votre répertoire : vous choisissez un seul contact.</li>
+    </ul>
+  </div>
+  <div class="carte">
+    <h2>Qui est derrière</h2>
+    <p>Logiciel libre dont le concept a été conçu par <b>Pixel's ASBL</b> (Boussu, Belgique). Pixel's ASBL ne reçoit aucun message et n'assure pas d'assistance par cette application.</p>
+    <p>Vigie est un outil indépendant, sans lien avec une administration ou une banque.</p>
+    <p class="note">Tesseract.js (Apache-2.0), Capacitor (MIT), police Atkinson Hyperlegible Next du Braille Institute (SIL OFL 1.1).</p>
+  </div>
+</section>
+
 </main>
 <footer class="pied">
-  <p class="signature"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt=""></picture>Vigie · logiciel libre conçu par Pixel's ASBL, Boussu</p>
+  <p class="signature"><picture><source media="(prefers-color-scheme: dark)" srcset="img/logo-icone-sombre.svg"><img src="img/logo-icone.svg" alt="" width="20" height="20"></picture>Vigie · logiciel libre conçu par Pixel's ASBL, Boussu</p>
   <p>Gratuit, sans compte, sans publicité. Aucune donnée n'est envoyée sur Internet. Vigie est une aide, pas une garantie.</p>
-  <p>Logiciel libre conçu par Pixel's ASBL (Boussu). Pixel's ASBL ne reçoit aucun message et n'assure pas d'assistance par cette application.</p>
-  <details>
-    <summary>Numéros utiles</summary>
-    <ul class="numeros">
-      <li>Carte ou code bancaire donné : <b>Card Stop 078 170 170</b></li>
-      <li>Message suspect : <b>suspect@safeonweb.be</b></li>
-      <li>Urgence police : <b>101</b></li>
-    </ul>
-  </details>
-  <p><button class="lien-discret" type="button" id="ouvrir-reglages">Ma personne de confiance</button></p>
-  <p class="note">Version <span id="version">0.1</span> · logiciel libre GPL-3.0</p>
 </footer></div>
+
+<nav class="tabbar" id="tabbar" aria-label="Navigation principale">
+  <button type="button" data-vue="accueil"><svg aria-hidden="true"><use href="#i-bouclier"/></svg>Vérifier</button>
+  <button type="button" data-vue="historique"><svg aria-hidden="true"><use href="#i-historique"/></svg>Historique</button>
+  <button type="button" data-vue="aide"><svg aria-hidden="true"><use href="#i-aide"/></svg>Aide</button>
+  <button type="button" data-vue="reglages"><svg aria-hidden="true"><use href="#i-reglages"/></svg>Réglages</button>
+</nav>
 
 <script src="regles.js"></script>
 <script src="ocr/tesseract.min.js"></script>
