@@ -2,7 +2,7 @@
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.2.0';
+  const VERSION = '0.2.1';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -72,17 +72,27 @@
 
   const erreur = (m) => { $('erreur').hidden = !m; $('erreur-texte').textContent = m || ''; };
 
-  /* ================= Préparation de la photo (même logique que sur PC) ================= */
-  async function preparer(fichier) {
+  /* ================= Préparation de la photo ================= */
+  // Redresse la photo (EXIF), passe en niveaux de gris, étire le contraste, inverse les écrans sombres,
+  // puis découpe en bandes (aux lignes vides) pour lire plusieurs bandes en parallèle.
+  function nbBandes(w, h) {
+    const pix = w * h, coeurs = navigator.hardwareConcurrency || 4, ram = navigator.deviceMemory || 4;
+    if (coeurs < 4 || ram < 3 || pix < 900000) return 1;
+    return (pix > 2600000 && coeurs >= 8 && ram >= 4) ? 3 : 2;
+  }
+  async function preparer(fichier, max) {
+    max = max || 2600;
     const bmp = await createImageBitmap(fichier, { imageOrientation: 'from-image' });
     const cote = Math.max(bmp.width, bmp.height);
-    const k = cote < 1600 ? 1600 / cote : (cote > 2200 ? 2200 / cote : 1);
+    let k = cote < 1600 ? 1600 / cote : (cote > max ? max / cote : 1);
+    if (bmp.width * bmp.height * k * k > 4.2e6) k = Math.sqrt(4.2e6 / (bmp.width * bmp.height));   // photo géante : on borne le travail
     const c = document.createElement('canvas');
     c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
     const g = c.getContext('2d', { willReadFrequently: true });
     g.drawImage(bmp, 0, 0, c.width, c.height);
     if (bmp.close) bmp.close();
-    const im = g.getImageData(0, 0, c.width, c.height), d = im.data, n = d.length / 4;
+    const W = c.width, H = c.height;
+    const im = g.getImageData(0, 0, W, H), d = im.data, n = d.length / 4;
     let h = new Uint32Array(256), somme = 0, i;
     for (i = 0; i < d.length; i += 4) {
       const y = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
@@ -95,33 +105,92 @@
     acc = 0; for (i = 255; i >= 0; i--) { acc += h[i]; if (acc > coupe) { haut = i; break; } }
     if (haut - bas < 64) { bas = 0; haut = 255; }         // texte très rare : on n'étire pas, pour ne rien perdre
     const ech = 255 / (haut - bas);
-    for (i = 0; i < d.length; i += 4) {
-      let v = inverser ? 255 - d[i] : d[i];
-      v = Math.max(0, Math.min(255, Math.round((v - bas) * ech)));
-      d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+    const s1 = new Float64Array(H), s2 = new Float64Array(H);
+    let sombre = 0, clair = 0;
+    for (let y = 0; y < H; y++) {
+      let a = 0, b = 0;
+      for (let x = 0, p = y * W * 4; x < W; x++, p += 4) {
+        let v = inverser ? 255 - d[p] : d[p];
+        v = Math.max(0, Math.min(255, Math.round((v - bas) * ech)));
+        d[p] = d[p + 1] = d[p + 2] = v; d[p + 3] = 255;
+        a += v; b += v * v; if (v < 80) sombre++; else if (v > 175) clair++;
+      }
+      s1[y] = a; s2[y] = b;
     }
     g.putImageData(im, 0, 0);
-    return new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/png'));
+    // Polarité mixte (bulles claires et sombres) : Tesseract doit lire aussi l'image inversée. Sinon on économise cette passe.
+    const mixte = (sombre / n) > 0.12 && (clair / n) > 0.12;
+    // Coupures : on choisit, près de chaque tiers, la ligne la plus uniforme (un interligne), pour ne jamais couper un mot.
+    const nb = nbBandes(W, H), coupures = [0];
+    for (let q = 1; q < nb; q++) {
+      const cibleY = Math.round(H * q / nb), fen = Math.round(H * 0.1);
+      let meilleur = cibleY, vmin = Infinity;
+      for (let y = Math.max(coupures[q - 1] + 50, cibleY - fen); y < Math.min(H - 50, cibleY + fen); y++) {
+        const moy = s1[y] / W, vari = s2[y] / W - moy * moy;
+        if (vari < vmin - 1e-6) { vmin = vari; meilleur = y; }
+      }
+      coupures.push(meilleur);
+    }
+    coupures.push(H);
+    const bandes = [];
+    for (let q = 0; q < nb; q++) {
+      const y0 = coupures[q], hh = coupures[q + 1] - y0, cb = document.createElement('canvas');
+      cb.width = W; cb.height = hh;
+      cb.getContext('2d').drawImage(c, 0, y0, W, hh, 0, 0, W, hh);
+      bandes.push(await new Promise((ok, ko) => cb.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/png')));
+    }
+    return { bandes, mixte };
   }
 
-  /* ================= Lecture (OCR) hors ligne ================= */
+  /* ================= Lecture (OCR) hors ligne, en parallèle ================= */
   const simd = () => {
     try { return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11])); } catch (e) { return false; }
   };
-  function creerTravailleur() {
-    if (travailleur) return travailleur;
+  let pool = [], initp = [], prog = [], passe = [], minuteurLiberation = 0;
+  function majCible() {
+    const n = Math.max(1, pool.length);
+    let ini = 0, rec = 0;
+    for (let i = 0; i < n; i++) { ini += initp[i] || 0; rec += Math.min(0.97, ((passe[i] || 0) + (prog[i] || 0)) / 2); }   // 2 passes : normale + inversée
+    ini /= n; rec /= n;
+    cible = Math.max(cible, 14 + ini * 14, rec > 0 ? 28 + rec * 60 : 0);
+  }
+  function creerTravailleur(i) {
     const base = new URL('ocr/', location.href).href;
-    travailleur = Tesseract.createWorker('fra', 1, {
+    return Tesseract.createWorker('fra', 1, {
       workerPath: base + 'worker.min.js',
       corePath: base + (simd() ? 'tesseract-core-simd-lstm.wasm.js' : 'tesseract-core-lstm.wasm.js'),
       langPath: base, gzip: true, cacheMethod: 'none', workerBlobURL: false,
       logger: (m) => {
-        if (m.status === 'recognizing text') cible = Math.max(cible, 28 + Math.round(m.progress * 60));
-        else if (m.status && /load|init/.test(m.status)) cible = Math.max(cible, 14 + Math.round((m.progress || 0) * 14));
+        if (m.status === 'recognizing text') { if (m.progress + 0.25 < (prog[i] || 0)) passe[i] = (passe[i] || 0) + 1; prog[i] = m.progress; majCible(); }
+        else if (m.status && /load|init/.test(m.status)) { initp[i] = Math.max(initp[i] || 0, m.progress || 0); majCible(); }
       }
     });
-    travailleur.catch(() => { travailleur = null; });
-    return travailleur;
+  }
+  function obtenirTravailleurs(n) {
+    clearTimeout(minuteurLiberation);
+    while (pool.length < n) { const i = pool.length, p = creerTravailleur(i); p.catch(() => { if (pool[i] === p) pool = []; }); pool.push(p); }
+    return Promise.all(pool.slice(0, n));
+  }
+  function libererTravailleurs() {
+    clearTimeout(minuteurLiberation);
+    pool.forEach((p) => p.then((w) => w.terminate()).catch(() => {}));
+    pool = []; initp = []; prog = []; passe = [];
+  }
+  const planifierLiberation = () => { clearTimeout(minuteurLiberation); minuteurLiberation = setTimeout(libererTravailleurs, 60000); };   // rend la mémoire au téléphone
+  async function lireImages(bandes, mixte) {
+    const ws = await obtenirTravailleurs(bandes.length);
+    if (annule) return '';
+    etape(1, 'Lecture du texte…');
+    prog = []; passe = [];
+    const delai = new Promise((_, ko) => setTimeout(() => ko(new Error('delai')), 150000));
+    try {
+      const textes = await Promise.race([delai, Promise.all(ws.map(async (w, i) => {
+        await w.setParameters({ tessedit_do_invert: mixte ? '1' : '0' });
+        return (await w.recognize(bandes[i])).data.text || '';
+      }))]);
+      planifierLiberation();
+      return textes.join('\n');
+    } catch (e) { libererTravailleurs(); throw e; }
   }
 
   /* ================= Écran de scan : gros pourcentage, faisceau, étapes ================= */
@@ -166,13 +235,14 @@
   async function analyserPhoto(fichier) {
     const url = URL.createObjectURL(fichier);
     demarrerScan(url);
+    // le pourcentage ne reste jamais figé : il avance doucement entre deux vrais signaux du moteur de lecture
+    const creep = setInterval(() => { if (cible >= 14 && cible < 86) cible += (86 - cible) * 0.014; }, 250);
+    const patience = setTimeout(() => { $('scan-statut').textContent = 'Lecture du texte… un peu plus longue sur ce téléphone'; }, 12000);
     try {
-      cible = 7;
-      const png = await preparer(fichier); if (annule) return;
-      cible = 14; etape(1, 'Lecture du texte…');
-      const w = await creerTravailleur();
-      const r = await w.recognize(png); if (annule) return;
-      const texte = (r.data.text || '').trim();
+      cible = 6;
+      const { bandes, mixte } = await preparer(fichier); if (annule) return;
+      cible = 14;
+      const texte = (await lireImages(bandes, mixte) || '').trim(); if (annule) return;
       if (texte.replace(/\s/g, '').length < 12) {
         finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
         erreur("Vigie n'a pas pu lire de texte sur cette photo. Reprenez-la plus près, bien droite et bien éclairée, ou collez le texte.");
@@ -182,8 +252,9 @@
       await conclure(texte, true);
     } catch (e) {
       finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
-      erreur('La lecture de la photo a échoué. Réessayez, ou collez le texte du message.');
-    } finally { URL.revokeObjectURL(url); reinitialiser(); }
+      erreur(e && e.message === 'delai' ? "La lecture prend trop de temps sur ce téléphone. Essayez avec une photo plus petite, ou collez le texte du message."
+        : 'La lecture de la photo a échoué. Réessayez, ou collez le texte du message.');
+    } finally { clearInterval(creep); clearTimeout(patience); URL.revokeObjectURL(url); reinitialiser(); }
   }
 
   async function analyserTexte(texte) {
@@ -360,5 +431,5 @@
   appliquerPrefs(); majAidant();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
   if (!lire('vigie.bienvenue', 0)) { vue('bienvenue', false); pasBienvenue(); } else vue('accueil', false);
-  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto };   // pour les tests automatiques
+  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages };   // pour les tests automatiques
 })();
