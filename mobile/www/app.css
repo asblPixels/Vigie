@@ -8,7 +8,7 @@ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bot
 .chargement h1{margin-top:22px}
 .chargement .intro{margin-left:auto;margin-right:auto}
 .barre{height:12px;border-radius:99px;background:var(--turquoise-pale);border:1px solid var(--turquoise-bord);overflow:hidden;margin:24px auto 0;max-width:340px}
-.barre span{display:block;height:100%;width:2%;background:var(--turquoise);border-radius:99px;transition:width .3s}
+.barre span{display:block;height:100%;width:2%;background:var(--turquoise);border-radius:99px;transition:width .1s}
 @keyframes respire{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
 .lien-discret{background:none;border:0;font:inherit;font-size:.82rem;color:var(--turquoise-fonce);font-weight:700;text-decoration:underline;cursor:pointer;padding:10px}
 .champ{display:block;margin-bottom:18px}.champ span{display:block;font-weight:700;margin-bottom:6px}

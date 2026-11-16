@@ -90,8 +90,8 @@
   // puis découpe en bandes (aux lignes vides) pour lire plusieurs bandes en parallèle.
   function nbBandes(w, h) {
     const pix = w * h, coeurs = navigator.hardwareConcurrency || 4, ram = navigator.deviceMemory || 4;
-    if (coeurs < 4 || ram < 3 || pix < 900000) return 1;
-    return (pix > 2600000 && coeurs >= 8 && ram >= 4) ? 3 : 2;
+    if (pix < 500000 || coeurs < 2) return 1;
+    return Math.max(1, Math.min(4, coeurs - 1, pix > 1500000 ? 4 : 2));   // tous les cœurs disponibles, sans plafond artificiel
   }
   async function preparer(fichier, max) {
     max = max || 2600;
@@ -234,10 +234,10 @@
 
   /* ================= Écran de scan : gros pourcentage, faisceau, étapes ================= */
   let cible = 0, aff = 0, raf = 0, rapide = false;
-  const attendre = async (p) => { while (!annule && aff < p - 0.5) await pause(40); };
+  const attendre = async (p) => { while (!annule && aff < p - 0.5) await pause(16); };
 
   function boucleScan() {
-    aff += (cible - aff) * (rapide ? 0.28 : 0.09);
+    aff += (cible - aff) * (rapide ? 0.5 : 0.15);
     if (Math.abs(cible - aff) < 0.4) aff = cible;
     $('scan-pct').textContent = Math.round(aff);
     $('barre-int').style.width = aff + '%';
@@ -266,9 +266,9 @@
 
   async function conclure(texte, photo) {
     etape(2, t('s.st.indices')); cible = 90; await attendre(88); if (annule) return;
-    await pause(rapide ? 100 : 450); if (annule) return;
+    await pause(rapide ? 0 : 200); if (annule) return;
     etape(3, t('s.e3')); cible = 100; await attendre(99.5); if (annule) return;
-    await pause(rapide ? 120 : 500); if (annule) return;
+    await pause(rapide ? 60 : 200); if (annule) return;
     finScan(); afficher(texte, photo, true, true);
   }
 
