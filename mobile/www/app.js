@@ -2,7 +2,7 @@
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.4.3';
+  const VERSION = '0.4.4';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -16,7 +16,7 @@
   const PARLE = { fr: 'fr-BE', nl: 'nl-BE', it: 'it-IT', de: 'de-DE' };
   const DATE = { fr: 'fr-BE', nl: 'nl-BE', it: 'it-IT', de: 'de-DE' };
   const detecter = () => { const l = String(navigator.language || 'fr').slice(0, 2).toLowerCase(); return LANGUES.indexOf(l) >= 0 ? l : 'fr'; };
-  const PREFS_DEFAUT = { taille: 'normal', theme: 'auto', voix: false, historique: true, langue: detecter(), voixId: {} };
+  const PREFS_DEFAUT = { taille: 'normal', theme: 'auto', voix: true, historique: false, langue: detecter(), voixId: {} };
   let prefs = Object.assign({}, PREFS_DEFAUT, lire('vigie.prefs', {}));
 
   const DICO = window.VIGIE_I18N || {};
@@ -82,7 +82,7 @@
     if (n === 'scan' || n === 'bienvenue') n = 'accueil';
     if (n === 'resultat' && dernier && analyser) afficher(dernier.t, dernier.p, false, false); else vue(n, false);
   });
-  document.querySelectorAll('#tabbar button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('#tabbar button, .lien-discret[data-vue]').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.vue === 'accueil' && dernier === null) { vue('accueil', true); return; }
     vue(b.dataset.vue, true);
   }));
@@ -298,13 +298,16 @@
   async function lireNatif(fichier, plugin) {
     /* 1600 px suffisent largement à ML Kit pour une capture d'écran, et le passage de l'image
        vers la partie native coûte moins cher : c'est ce transfert, pas la lecture, qui est lourd. */
-    let bmp;
-    try { bmp = await createImageBitmap(fichier, { imageOrientation: 'from-image' }); }
-    catch (e) { bmp = await createImageBitmap(fichier); }   // option refusée par certaines WebView
-    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    /* Décoder l'image directement à la taille voulue : sur une capture d'écran de 3000 px,
+       décoder en entier puis redessiner coûte bien plus cher que la lecture elle-même. */
+    let bmp = null;
+    try { bmp = await createImageBitmap(fichier, { resizeWidth: 1280, resizeQuality: 'medium', imageOrientation: 'from-image' }); } catch (e) { bmp = null; }
+    if (!bmp) { try { bmp = await createImageBitmap(fichier, { resizeWidth: 1280 }); } catch (e) { bmp = null; } }
+    if (!bmp) bmp = await createImageBitmap(fichier);
+    const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
     c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
     c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); if (bmp.close) bmp.close();
-    const blob = await new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/jpeg', 0.8));
+    const blob = await new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/jpeg', 0.7));
     const data = await new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = ko; f.readAsDataURL(blob); });
     cible = 60;
     /* Si la partie native ne répond pas, on ne reste pas suspendu : mieux vaut le dire tout de suite. */
@@ -871,7 +874,7 @@
   natif();   // renseigne le diagnostic dès l'ouverture
   appliquerPrefs();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
-  if (!lire('vigie.bienvenue', 0)) { vue('bienvenue', false); pasBienvenue(0); } else vue('accueil', false);
+  vue('accueil', false);   // plus de présentation : l'application s'ouvre sur ce qu'elle fait
   // Un message partagé passe devant la présentation : c'est ce que l'utilisateur vient de demander.
   // La présentation reste à voir au prochain lancement ordinaire.
   const PARTAGE = plugPartage();
