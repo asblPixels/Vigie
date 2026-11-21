@@ -129,6 +129,16 @@ details.carte-ligne{margin-bottom:10px}
 @media (prefers-reduced-motion:reduce){.bv-piste{scroll-behavior:auto}}
 .coordonnees a{color:var(--turquoise-fonce);font-weight:700}
 
+/* Proposition de vérifier ce que l'utilisateur vient de copier (presse-papier) */
+.pp{position:relative;display:flex;gap:14px;margin:0 0 22px;padding:16px 18px;background:var(--turquoise-pale);border:1px solid var(--turquoise-bord);border-left:5px solid var(--turquoise);border-radius:var(--r-carte)}
+.pp>svg{flex:none;width:26px;height:26px;margin-top:2px;color:var(--turquoise-fonce)}
+.pp-corps{flex:1;min-width:0}
+.pp-titre{margin:0;padding-right:36px;font-weight:700;font-size:.95rem}
+.pp-extrait{margin:6px 0 0;font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp .btn-principal{margin-top:14px}
+.pp-ecarter{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer}
+.pp-ecarter svg{width:20px;height:20px}
+
 /* Choix de la voix (réglages) */
 #ligne-voix-choix{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 #ligne-voix-choix label{display:block;font-weight:700;font-size:.85rem;color:var(--muted);margin-bottom:8px}
