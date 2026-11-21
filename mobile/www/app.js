@@ -2,7 +2,7 @@
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.4.0';
+  const VERSION = '0.4.1';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -276,30 +276,56 @@
 
   /* Lecture native Android (ML Kit, embarquée) : quasi instantanée. Sinon on retombe sur Tesseract. */
   const natif = () => { try { return window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() ? Capacitor.registerPlugin('LectureTexte') : null; } catch (e) { return null; } };
+  /* Dernière erreur de lecture native, affichée dans À propos : sans elle, un échec est muet
+     et l'application passe en lecture de secours sans que personne sache pourquoi. */
+  let DERNIERE_ERREUR = '';
+
   async function lireNatif(fichier, plugin) {
-    const bmp = await createImageBitmap(fichier, { imageOrientation: 'from-image' });
-    const k = Math.min(1, 2200 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+    /* 1600 px suffisent largement à ML Kit pour une capture d'écran, et le passage de l'image
+       vers la partie native coûte moins cher : c'est ce transfert, pas la lecture, qui est lourd. */
+    let bmp;
+    try { bmp = await createImageBitmap(fichier, { imageOrientation: 'from-image' }); }
+    catch (e) { bmp = await createImageBitmap(fichier); }   // option refusée par certaines WebView
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
     c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
     c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); if (bmp.close) bmp.close();
-    const blob = await new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/jpeg', 0.92));
+    const blob = await new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/jpeg', 0.8));
     const data = await new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = ko; f.readAsDataURL(blob); });
-    cible = 40;
-    return (await plugin.lire({ data })).texte || '';
+    cible = 60;
+    /* Si la partie native ne répond pas, on ne reste pas suspendu : mieux vaut le dire tout de suite. */
+    const r = await Promise.race([
+      plugin.lire({ data }),
+      new Promise((ok, ko) => setTimeout(() => ko(new Error('la lecture native n\'a pas répondu en 8 s')), 8000)),
+    ]);
+    return r.texte || '';
   }
 
   async function analyserPhoto(fichier) {
     const url = URL.createObjectURL(fichier);
     demarrerScan(url);
     // le pourcentage ne reste jamais figé : il avance doucement entre deux vrais signaux du moteur de lecture
-    const creep = setInterval(() => { if (cible >= 14 && cible < 86) cible += (86 - cible) * 0.014; }, 250);
-    const patience = setTimeout(() => { $('scan-statut').textContent = t('s.st.long'); }, 12000);
+    /* L'animation d'attente ne concerne que la lecture de secours : la lecture native est instantanée. */
+    const creep = setInterval(() => { if (!rapide && cible >= 14 && cible < 86) cible += (86 - cible) * 0.014; }, 250);
+    const patience = setTimeout(() => { if (!rapide) $('scan-statut').textContent = t('s.st.long'); }, 12000);
     try {
       cible = 6;
       const N = natif();
       let texte = null;
-      if (N) { try { rapide = true; texte = (await lireNatif(fichier, N)).trim(); cible = 88; } catch (e) { texte = null; rapide = false; } }
+      if (N) {
+        rapide = true;
+        try { texte = (await lireNatif(fichier, N)).trim(); cible = 88; DERNIERE_ERREUR = ''; }
+        catch (e) {
+          /* Sur Android, la lecture native est la seule rapide. Si elle échoue, la lecture de
+             secours prend des minutes : c'est pire que de ne rien faire. On le dit et on s'arrête. */
+          DERNIERE_ERREUR = (e && (e.message || e.errorMessage)) || 'erreur inconnue';
+          finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
+          erreur(t('err.lecture') + ' (' + DERNIERE_ERREUR + ')');
+          return;
+        }
+      }
       if (annule) return;
       if (texte === null) {
+        /* Version web uniquement : pas de lecture native disponible. */
         const { bandes, mixte } = await preparer(fichier); if (annule) return;
         cible = 14;
         texte = (await lireImages(bandes, mixte) || '').trim(); if (annule) return;
