@@ -4,4 +4,6 @@
     <string name="title_activity_main">Vigie</string>
     <string name="package_name">be.asblpixels.vigie</string>
     <string name="custom_url_scheme">be.asblpixels.vigie</string>
+    <!-- Libellé de Vigie dans la feuille de partage d'Android (traduit dans values-nl, values-it, values-de). -->
+    <string name="partage_libelle">Vérifier avec Vigie</string>
 </resources>
