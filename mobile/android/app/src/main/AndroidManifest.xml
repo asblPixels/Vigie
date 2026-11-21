@@ -55,5 +55,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Appareil photo : uniquement pour photographier un message. Aucun accès au répertoire ni à la galerie. -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Position : demandée uniquement quand la personne touche « Envoyer où je suis ».
+         Lue une seule fois. Pas d'ACCESS_BACKGROUND_LOCATION : Vigie ne suit personne. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

@@ -2,7 +2,7 @@
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.4.2';
+  const VERSION = '0.4.3';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,6 +32,8 @@
     document.querySelectorAll('[data-i18n-ph]').forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
     document.querySelectorAll('[data-i18n-aria]').forEach((e) => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
     $('version-ligne').textContent = t('p.version', { v: VERSION });
+    /* Diagnostic visible : sans lui, un échec de la lecture rapide reste invisible. */
+    $('version-ligne').textContent += ' · ' + t('p.diag') + ' : ' + DIAG + (DERNIERE_ERREUR ? ' (' + DERNIERE_ERREUR + ')' : '');
     document.querySelectorAll('button[data-langue]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.langue === prefs.langue)));
     if (!$('histo-effacer-txt').dataset.attente) $('histo-effacer-txt').textContent = t('h.effacer');
     $('etape-0-txt').textContent = t(photoEnCours ? 's.e0.photo' : 's.e0.msg');
@@ -237,7 +239,9 @@
 
   /* ================= Écran de scan : gros pourcentage, faisceau, étapes ================= */
   let cible = 0, aff = 0, raf = 0, rapide = false;
-  const attendre = async (p) => { while (!annule && aff < p - 0.5) await pause(16); };
+  /* Sur la voie rapide (lecture native ou texte collé) il n'y a rien à attendre :
+     faire patienter devant une barre de progression serait du décor. */
+  const attendre = async (p) => { if (rapide) return; while (!annule && aff < p - 0.5) await pause(16); };
 
   function boucleScan() {
     aff += (cible - aff) * (rapide ? 0.5 : 0.15);
@@ -271,15 +275,25 @@
     etape(2, t('s.st.indices')); cible = 90; await attendre(88); if (annule) return;
     await pause(rapide ? 0 : 200); if (annule) return;
     etape(3, t('s.e3')); cible = 100; await attendre(99.5); if (annule) return;
-    await pause(rapide ? 60 : 200); if (annule) return;
+    await pause(rapide ? 0 : 200); if (annule) return;
     finScan(); afficher(texte, photo, true, true);
   }
 
   /* Lecture native Android (ML Kit, embarquée) : quasi instantanée. Sinon on retombe sur Tesseract. */
-  const natif = () => { try { return window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() ? Capacitor.registerPlugin('LectureTexte') : null; } catch (e) { return null; } };
+  /* On n'exige plus isNativePlatform() : si le pont Capacitor est là, le plugin natif l'est aussi.
+     Cette condition était la raison pour laquelle l'application retombait sur la lecture de
+     secours — des minutes d'attente — alors que ML Kit était disponible. */
+  const natif = () => {
+    try {
+      if (!window.Capacitor || !Capacitor.registerPlugin) { DIAG = 'pont Capacitor absent'; return null; }
+      const p = Capacitor.registerPlugin('LectureTexte');
+      if (!p || !p.lire) { DIAG = 'plugin LectureTexte absent'; return null; }
+      DIAG = 'disponible'; return p;
+    } catch (e) { DIAG = 'erreur : ' + (e && e.message); return null; }
+  };
   /* Dernière erreur de lecture native, affichée dans À propos : sans elle, un échec est muet
      et l'application passe en lecture de secours sans que personne sache pourquoi. */
-  let DERNIERE_ERREUR = '';
+  let DERNIERE_ERREUR = '', DIAG = 'non testée';
 
   async function lireNatif(fichier, plugin) {
     /* 1600 px suffisent largement à ML Kit pour une capture d'écran, et le passage de l'image
@@ -427,6 +441,38 @@
       return '<a class="numero" data-externe href="' + esc(lien) + '"><b>' + esc(nomContact(c)) + '</b><span>' +
         esc(c.affichage || '') + '</span><small>' + esc(c.desc ? t(c.desc) : '') + '</small></a>';
     }).join('');
+  }
+
+  /* ================= Jeton de présence =================
+   * Un bouton : Vigie lit la position UNE fois, écrit le message, ouvre l'application de
+   * messages avec le texte prêt. L'envoi reste un geste de la personne.
+   * Pas de service en arrière-plan : Android imposerait une notification permanente
+   * (« Vigie suit votre position »), que l'optimisation de batterie peut tuer sans prévenir.
+   * Rien n'est envoyé par Vigie, aucun serveur, aucune position conservée. */
+  let JETON = '';
+
+  function jetonTexte(pos) {
+    const lat = pos.coords.latitude.toFixed(5), lon = pos.coords.longitude.toFixed(5);
+    const h = new Date().toLocaleTimeString(DATE[prefs.langue] || 'fr-BE', { hour: '2-digit', minute: '2-digit' });
+    return t('j.message', { h: h }) + '\nhttps://maps.google.com/?q=' + lat + ',' + lon;
+  }
+
+  function jetonEnvoyer() {
+    const b = $('jeton'); if (!b) return;
+    b.disabled = true; b.textContent = t('j.recherche');
+    const fini = (msg) => { b.disabled = false; b.textContent = t('j.bouton'); if (msg) erreur(msg); };
+    if (!navigator.geolocation) { fini(t('j.sans')); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        JETON = jetonTexte(pos);
+        $('jeton-texte').textContent = JETON;
+        $('jeton-resultat').hidden = false;
+        fini('');
+        ouvrirExterne('sms:?body=' + encodeURIComponent(JETON));
+      },
+      () => fini(t('j.sans')),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
   }
 
   /* ================= Liens sortants (tel:, mailto:) =================
@@ -738,6 +784,10 @@
     majPref('voixId', m); parler(t('g.voix.exemple'));
   });
   if ($('reg-voix-test')) $('reg-voix-test').addEventListener('click', () => parler(t('g.voix.exemple')));
+  if ($('jeton')) $('jeton').addEventListener('click', jetonEnvoyer);
+  if ($('jeton-copier')) $('jeton-copier').addEventListener('click', function () {
+    try { navigator.clipboard.writeText(JETON); this.textContent = t('j.copie'); } catch (e) { /* refusé */ }
+  });
   $('ouvrir-apropos').addEventListener('click', () => vue('apropos', true));
   $('revoir-presentation').addEventListener('click', () => { vue('bienvenue', true); pasBienvenue(0, true); });
 
@@ -818,6 +868,7 @@
       .then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); ppPlusTard(); }),
     annuairePret,
   ]).then(() => true).catch(() => { erreur(t('err.regles')); return false; });
+  natif();   // renseigne le diagnostic dès l'ouverture
   appliquerPrefs();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
   if (!lire('vigie.bienvenue', 0)) { vue('bienvenue', false); pasBienvenue(0); } else vue('accueil', false);
