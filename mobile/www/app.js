@@ -2,7 +2,7 @@
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.4.1';
+  const VERSION = '0.4.2';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -36,6 +36,7 @@
     if (!$('histo-effacer-txt').dataset.attente) $('histo-effacer-txt').textContent = t('h.effacer');
     $('etape-0-txt').textContent = t(photoEnCours ? 's.e0.photo' : 's.e0.msg');
     rendreNumeros($('aide-numeros'));   // la grille vient de annuaire.json : elle n'a pas d'attribut data-i18n
+    rendreDanger();
     if (typeof pasBienvenue === 'function' && typeof piste !== 'undefined') pasBienvenue();   // le bouton du carrousel suit la langue
   }
   function appliquerPrefs() {
@@ -396,7 +397,7 @@
       if (k.charAt(0) === '_') return;
       try { MOTIFS[k] = new RegExp(m[k]); } catch (e) { /* motif illisible : ignoré, jamais bloquant */ }
     });
-    rendreNumeros($('aide-numeros'));
+    rendreNumeros($('aide-numeros')); rendreDanger();
   }
   const contact = (cle) => ((ANNUAIRE && ANNUAIRE.urgences) || []).filter((x) => x && x.cle === cle)[0] || null;
   const nomContact = (c) => (c.nom_i18n ? t(c.nom_i18n) : c.nom || '');
@@ -407,9 +408,21 @@
   /* Liste courte des contacts d'urgence : 5 au maximum, uniquement ceux de annuaire.json.
    * Sert à la fois au bouton « J'ai besoin d'aide maintenant » et à l'onglet Aide, dont le
    * HTML de index.html n'est qu'un repli identique si le fichier ne se charge pas. */
+  /* Bouton d'alerte : les mêmes contacts vérifiés, mis en avant quand il y a danger immédiat.
+     Vigie n'envoie ni position ni message à personne : elle compose, c'est tout. */
+  function rendreDanger() {
+    const zone = $('aide-danger'); if (!zone || !ANNUAIRE || !ANNUAIRE.danger) return;
+    const par = {}; (ANNUAIRE.urgences || []).forEach((c) => { par[c.cle] = c; });
+    zone.innerHTML = ANNUAIRE.danger.map((cle) => {
+      const c = par[cle], lien = c && lienContact(c); if (!lien) return '';
+      return '<a class="btn-danger" data-externe href="' + esc(lien) + '"><b>' + esc(nomContact(c)) +
+        '</b><span>' + esc(c.affichage || '') + '</span></a>';
+    }).join('');
+  }
+
   function rendreNumeros(zone) {
     if (!zone || !ANNUAIRE || !ANNUAIRE.urgences) return;
-    zone.innerHTML = ANNUAIRE.urgences.slice(0, 5).map((c) => {
+    zone.innerHTML = ANNUAIRE.urgences.map((c) => {
       const lien = lienContact(c); if (!lien) return '';
       return '<a class="numero" data-externe href="' + esc(lien) + '"><b>' + esc(nomContact(c)) + '</b><span>' +
         esc(c.affichage || '') + '</span><small>' + esc(c.desc ? t(c.desc) : '') + '</small></a>';
