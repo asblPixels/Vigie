@@ -537,11 +537,64 @@
     pasBienvenue(pas + 1);
   });
   $('bv-passer').addEventListener('click', finBienvenue);
+  /* ================= Contenu reçu du bouton « Partager » d'Android =================
+   * L'utilisateur reçoit un message douteux, touche « Partager », choisit Vigie : l'analyse part
+   * tout de suite, sans rien coller ni taper. Le plugin natif garde le contenu de côté ; on le
+   * récupère au démarrage et à chaque signal (application déjà ouverte). Tout reste sur le téléphone. */
+  const plugPartage = () => { try { return window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() ? Capacitor.registerPlugin('Partage') : null; } catch (e) { return null; } };
+  let partageEnCours = false;
+
+  function blobBase64(b64, mime) {
+    const bin = atob(b64), n = bin.length, octets = new Uint8Array(n);
+    for (let i = 0; i < n; i++) octets[i] = bin.charCodeAt(i);
+    return new Blob([octets], { type: mime || 'image/jpeg' });
+  }
+
+  function echecPartage(cle) {
+    vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
+    erreur(t(cle));
+  }
+
+  async function reprendrePartage(P) {
+    if (partageEnCours) return;
+    partageEnCours = true;
+    try {
+      // Une analyse est déjà en cours : on la laisse finir plutôt que de l'interrompre à mi-chemin.
+      for (let i = 0; vueCourante === 'scan' && i < 50; i++) await pause(300);
+      const c = await P.contenuEnAttente();
+      if (!c || !c.type) return;                       // rien n'a été partagé : démarrage ordinaire
+      if (!(await reglesPretes)) return;               // règles illisibles : le message est déjà affiché
+      if (c.type === 'texte') {
+        const texte = String(c.texte || '').trim();
+        if (!texte) { echecPartage('err.partage'); return; }
+        $('texte').value = texte;
+        await analyserTexte(texte);
+      } else if (c.type === 'image') {
+        await analyserPhoto(blobBase64(c.image, c.mime));
+      } else {
+        echecPartage(c.type === 'trop-grande' ? 'err.partage.grande' : 'err.partage');
+      }
+    } catch (e) {
+      echecPartage('err.partage');
+    } finally { partageEnCours = false; }
+  }
+
   /* ================= Démarrage ================= */
-  fetch('regles.json').then((r) => r.json()).then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); })
-    .catch(() => erreur(t('err.regles')));
+  const reglesPretes = fetch('regles.json').then((r) => r.json())
+    .then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); return true; })
+    .catch(() => { erreur(t('err.regles')); return false; });
   appliquerPrefs();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
   if (!lire('vigie.bienvenue', 0)) { vue('bienvenue', false); pasBienvenue(0); } else vue('accueil', false);
-  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages };   // pour les tests automatiques
+  // Un message partagé passe devant la présentation : c'est ce que l'utilisateur vient de demander.
+  // La présentation reste à voir au prochain lancement ordinaire.
+  const PARTAGE = plugPartage();
+  if (PARTAGE) {
+    try {
+      const ecoute = PARTAGE.addListener('partage', () => reprendrePartage(PARTAGE));
+      if (ecoute && ecoute.catch) ecoute.catch(() => {});
+    } catch (e) { /* pas d'écoute possible : le contenu sera pris au prochain démarrage */ }
+    reprendrePartage(PARTAGE);
+  }
+  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages, reprendrePartage };   // pour les tests automatiques
 })();

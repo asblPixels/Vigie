@@ -22,6 +22,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Bouton « Partager » d'Android : un message douteux reçu dans n'importe quelle
+                 application (Messages, Gmail, navigateur, galerie) arrive directement dans Vigie.
+                 Le libellé affiché dans la feuille de partage est @string/partage_libelle. -->
+            <intent-filter android:label="@string/partage_libelle">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <intent-filter android:label="@string/partage_libelle">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
         </activity>
 
         <provider
