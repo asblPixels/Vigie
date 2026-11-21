@@ -1,6 +1,6 @@
 {
   "name": "vigie-mobile",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "Vigie — application Android autonome (Pixel's ASBL)",
   "scripts": {
     "preparer": "node scripts/preparer.js",

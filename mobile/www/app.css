@@ -202,3 +202,25 @@ details.carte-ligne{margin-bottom:10px}
 .btn-jeton:disabled{opacity:.6}
 .jeton-texte{background:#fff;border:1px solid var(--line,#dde);border-radius:10px;padding:12px;margin:12px 0 10px;
   font-size:.86rem;word-break:break-word;white-space:pre-wrap}
+
+/* ================= Accueil refondu : un seul geste ================= */
+.acc-titre{font-size:1.5rem;margin:18px 0 20px}
+#vue-accueil .geste{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:var(--turquoise,#11a08a);color:#fff;border-radius:18px;padding:30px 20px;min-height:148px;
+  font-size:1.26rem;font-weight:800;text-align:center;cursor:pointer;margin-bottom:12px}
+#vue-accueil .geste svg{width:42px;height:42px}
+#vue-accueil .geste-2{background:var(--surface,#fff);color:var(--turquoise-fonce,#0b6f60);
+  border:2px solid var(--turquoise,#11a08a);min-height:104px;font-size:1.08rem;padding:20px}
+#vue-accueil .geste-2 svg{width:32px;height:32px}
+#vue-accueil input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.replie{margin-top:6px}
+.replie>summary{list-style:none;cursor:pointer;padding:16px 4px;font-weight:700;color:var(--turquoise-fonce,#0b6f60);
+  text-align:center;font-size:.98rem}
+.replie>summary::-webkit-details-marker{display:none}
+.replie textarea{width:100%;min-height:120px;border:1px solid var(--line,#dde);border-radius:12px;
+  padding:12px;font:inherit;margin-bottom:10px}
+.btn-urgence{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:26px;
+  background:#fff;color:var(--rouge,#b3261e);border:2px solid var(--rouge,#b3261e);border-radius:14px;
+  padding:16px;min-height:62px;font-weight:800;font-size:1.02rem}
+.btn-urgence svg{width:24px;height:24px}
+.acc-note{text-align:center;margin-top:16px}

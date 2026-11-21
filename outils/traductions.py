@@ -310,6 +310,8 @@ TABLE = {
   "Position nicht verfügbar. Sie können den Namen der Straße oder des nächsten Geschäfts senden."),
 'j.copier': ("Copier le message","Bericht kopiëren","Copia il messaggio","Nachricht kopieren"),
 'j.copie': ("Copié","Gekopieerd","Copiato","Kopiert"),
+'acc.danger': ("Je suis en danger","Ik ben in gevaar","Sono in pericolo","Ich bin in Gefahr"),
+'acc.local': ("Tout reste sur ce téléphone.","Alles blijft op deze telefoon.","Tutto resta su questo telefono.","Alles bleibt auf diesem Telefon."),
 'p.diag': ("lecture rapide","snel lezen","lettura rapida","schnelles Lesen"),
 'p.perm.pos.h': ("<b>Position :</b> demandée uniquement quand vous touchez « Envoyer où je suis ». Lue une seule fois, insérée dans un message que vous envoyez vous-même. Vigie ne la conserve pas et ne suit personne.",
   "<b>Locatie:</b> enkel gevraagd wanneer u \"Doorsturen waar ik ben\" aanraakt. Eén keer gelezen, in een bericht gezet dat u zelf verstuurt. Vigie bewaart ze niet en volgt niemand.",

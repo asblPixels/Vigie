@@ -2,7 +2,7 @@
  * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
 (function () {
   'use strict';
-  const VERSION = '0.4.4';
+  const VERSION = '0.5.0';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -82,7 +82,7 @@
     if (n === 'scan' || n === 'bienvenue') n = 'accueil';
     if (n === 'resultat' && dernier && analyser) afficher(dernier.t, dernier.p, false, false); else vue(n, false);
   });
-  document.querySelectorAll('#tabbar button, .lien-discret[data-vue]').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('button[data-vue]').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.vue === 'accueil' && dernier === null) { vue('accueil', true); return; }
     vue(b.dataset.vue, true);
   }));

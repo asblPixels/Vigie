@@ -66,24 +66,33 @@
     </div>
     <button class="pp-ecarter" type="button" id="pp-ecarter" data-i18n-aria="pp.ecarter" aria-label="Écarter cette proposition"><svg aria-hidden="true"><use href="#i-fermer"/></svg></button>
   </div>
-  <span class="surtitre" data-i18n="acc.surtitre">Vérification anti-arnaque</span>
-  <h1 data-i18n="acc.titre">Un message vous inquiète ?</h1>
-  <p class="intro" data-i18n="acc.intro">Prenez-le en photo ou collez-le. Vigie vous dit s'il est dangereux et quoi faire. Tout reste sur ce téléphone.</p>
+  <h1 class="acc-titre" data-i18n="acc.titre">Un message vous inquiète ?</h1>
   <div class="alerte" id="erreur" role="alert" hidden><svg aria-hidden="true"><use href="#i-attention"/></svg><span id="erreur-texte"></span></div>
-  <form class="carte" id="formulaire" novalidate>
-    <label class="btn btn-camera" for="camera"><svg aria-hidden="true"><use href="#i-photo"/></svg><span data-i18n="acc.photo">Prendre en photo</span></label>
+
+  <form id="formulaire" novalidate>
+    <!-- Un seul geste visible. Tout le reste est replié : c'est la photo que les gens font. -->
+    <label class="geste" for="camera">
+      <svg aria-hidden="true"><use href="#i-photo"/></svg>
+      <span data-i18n="acc.photo">Prendre en photo</span>
+    </label>
     <input type="file" id="camera" accept="image/*" capture="environment">
-    <p class="aide-photo" data-i18n="acc.photo.aide">Photographiez l'écran ou le courrier, même s'il appartient à quelqu'un d'autre.</p>
-    <div class="ou"><span data-i18n="acc.ou">ou</span></div>
-    <label class="titre" for="texte" data-i18n="acc.label">Collez le texte du message</label>
-    <textarea id="texte" data-i18n-ph="acc.placeholder" placeholder="Exemple : « Votre colis est en attente, payez 1,99 € ici… »"></textarea>
-    <div class="outils">
+
+    <label class="geste geste-2" for="galerie">
+      <svg aria-hidden="true"><use href="#i-galerie"/></svg>
+      <span data-i18n="acc.capture">Capture d'écran</span>
+    </label>
+    <input type="file" id="galerie" accept="image/*">
+
+    <details class="replie">
+      <summary data-i18n="acc.label">Collez le texte du message</summary>
+      <textarea id="texte" data-i18n-ph="acc.placeholder" placeholder="Exemple : « Votre colis est en attente, payez 1,99 € ici… »"></textarea>
       <button class="btn btn-secondaire" type="button" id="coller"><svg aria-hidden="true"><use href="#i-coller"/></svg><span data-i18n="acc.coller">Coller</span></button>
-      <label class="btn btn-secondaire" for="galerie"><svg aria-hidden="true"><use href="#i-galerie"/></svg><span data-i18n="acc.capture">Capture d'écran</span></label>
-      <input type="file" id="galerie" accept="image/*">
-    </div>
-    <button class="btn btn-principal" type="submit" id="verifier"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="acc.verifier">Vérifier le message</span></button>
+      <button class="btn btn-principal" type="submit" id="verifier"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="acc.verifier">Vérifier le message</span></button>
+    </details>
   </form>
+
+  <button class="btn-urgence" type="button" data-vue="aide"><svg aria-hidden="true"><use href="#i-danger"/></svg><span data-i18n="acc.danger">Je suis en danger</span></button>
+  <p class="note acc-note" data-i18n="acc.local">Tout reste sur ce téléphone.</p>
 </section>
 
 <section class="vue" id="vue-scan" aria-live="polite">
