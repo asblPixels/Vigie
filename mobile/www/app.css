@@ -64,6 +64,47 @@ body.sans-onglets .page{padding-bottom:32px}
 .niveau-barre.n2 i:nth-child(-n+2){background:var(--orange)}
 .niveau-barre.n1 i:first-child{background:var(--vert)}
 
+/* Résultat : l'action unique.
+ * Un seul bloc domine l'écran. Le bouton d'appel est volontairement plus grand et plus
+ * contrasté que tout le reste : public âgé, souvent en situation de stress. */
+.action{border-radius:var(--r-carte);padding:22px;margin-bottom:16px;border:1px solid;border-left-width:8px;background:var(--surface)}
+.action h2{margin:0 0 10px;font-size:1.3rem}
+.action-sur{display:block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+.action-quoi{margin:14px 0 0;font-size:.95rem}
+.action .note{margin:10px 0 0}
+.action-rouge,.action-rouge-mail{background:var(--rouge-bg);border-color:var(--rouge-line);border-left-color:var(--rouge)}
+.action-rouge .action-sur,.action-rouge-mail .action-sur{color:var(--rouge)}
+.action-orange{background:var(--orange-bg);border-color:var(--orange-line);border-left-color:var(--orange)}
+.action-orange .action-sur{color:var(--orange)}
+.action-orange h2{color:var(--orange)}
+.action-consigne{margin:0;font-size:1.15rem;font-weight:700;line-height:1.45}
+.action-vert{background:var(--vert-bg);border-color:var(--vert-line);border-left-color:var(--vert);padding:18px 22px}
+.action-vert h2{font-size:1.05rem;color:var(--vert)}
+.action-vert p{margin:0;font-size:.9rem}
+.btn-action{min-height:76px;font-size:1.2rem;background:var(--nuit);color:#fff;border-color:var(--nuit);box-shadow:0 3px 0 rgba(14,42,56,.3)}
+.btn-action:hover{background:var(--nuit-2)}
+.btn-action svg{width:28px;height:28px}
+.btn-action span{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+.btn-action small{font-size:.95rem;font-weight:800;letter-spacing:.04em;opacity:.9}
+.action-rouge .btn-action{background:var(--rouge);border-color:var(--rouge);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.action-rouge .btn-action:hover{filter:brightness(1.08)}
+
+/* Bouton secondaire permanent : « J'ai besoin d'aide maintenant » */
+details.aide-vite{border-color:#BCC8CE}
+details.aide-vite>summary{min-height:58px;justify-content:center;gap:10px;font-size:1rem}
+details.aide-vite>summary svg{width:22px;height:22px;flex:none;color:var(--turquoise-fonce)}
+details.aide-vite>summary::after{display:none}
+details.pourquoi .etiquette{margin:4px 0 6px}
+details.pourquoi .etiquette:not(:first-child){margin-top:16px}
+/* Thème sombre : en sombre, --nuit et --rouge deviennent clairs. Le texte du gros bouton
+ * doit alors être foncé, sinon il devient illisible — exactement l'écran où il ne faut pas. */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]) .btn-action,:root:not([data-theme="clair"]) .btn-action:hover{color:#04222B;box-shadow:none}
+  :root:not([data-theme="clair"]) .action-rouge .btn-action,:root:not([data-theme="clair"]) .action-rouge .btn-action:hover{background:var(--rouge);border-color:var(--rouge);color:#2A0B08;box-shadow:none}
+}
+:root[data-theme="sombre"] .btn-action,:root[data-theme="sombre"] .btn-action:hover{color:#04222B;box-shadow:none}
+:root[data-theme="sombre"] .action-rouge .btn-action,:root[data-theme="sombre"] .action-rouge .btn-action:hover{background:var(--rouge);border-color:var(--rouge);color:#2A0B08;box-shadow:none}
+
 /* Historique */
 .h-item{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;margin-bottom:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-left-width:6px;border-radius:var(--r-btn)}
 .h-item.rouge{border-left-color:var(--rouge)}.h-item.orange{border-left-color:var(--orange)}.h-item.vert{border-left-color:var(--vert)}

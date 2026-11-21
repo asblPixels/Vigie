@@ -35,6 +35,7 @@
     document.querySelectorAll('button[data-langue]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.langue === prefs.langue)));
     if (!$('histo-effacer-txt').dataset.attente) $('histo-effacer-txt').textContent = t('h.effacer');
     $('etape-0-txt').textContent = t(photoEnCours ? 's.e0.photo' : 's.e0.msg');
+    rendreNumeros($('aide-numeros'));   // la grille vient de annuaire.json : elle n'a pas d'attribut data-i18n
     if (typeof pasBienvenue === 'function' && typeof piste !== 'undefined') pasBienvenue();   // le bouton du carrousel suit la langue
   }
   function appliquerPrefs() {
@@ -354,6 +355,113 @@
     confirmerEffacement = 0; delete lib.dataset.attente; lib.textContent = t('h.effacer'); ecrire(CLE_H, []); rendreHistorique();
   });
 
+  /* ================= Annuaire (numéros vérifiés) =================
+   * RÈGLE ABSOLUE : aucun numéro de téléphone n'est écrit dans ce fichier. Tous viennent de
+   * annuaire.json, où chacun a été vérifié à la main (voir l'avertissement en tête de ce fichier).
+   * Vigie ne compose JAMAIS un numéro trouvé dans le message analysé : pour une banque ou un
+   * service, elle affiche la consigne officielle (« le numéro au dos de votre carte »).
+   * Si annuaire.json manque, Vigie n'invente rien : elle revient à la liste de conseils. */
+  let ANNUAIRE = null, MOTIFS = {};
+
+  function chargerAnnuaire(j) {
+    ANNUAIRE = j; MOTIFS = {};
+    const m = (j && j.motifs) || {};
+    Object.keys(m).forEach((k) => {
+      if (k.charAt(0) === '_') return;
+      try { MOTIFS[k] = new RegExp(m[k]); } catch (e) { /* motif illisible : ignoré, jamais bloquant */ }
+    });
+    rendreNumeros($('aide-numeros'));
+  }
+  const contact = (cle) => ((ANNUAIRE && ANNUAIRE.urgences) || []).filter((x) => x && x.cle === cle)[0] || null;
+  const nomContact = (c) => (c.nom_i18n ? t(c.nom_i18n) : c.nom || '');
+  /* Un href d'appel ne contient que des chiffres et un éventuel « + » : rien d'autre ne peut s'y glisser. */
+  const lienContact = (c) => (c.tel ? 'tel:' + String(c.tel).replace(/[^0-9+]/g, '')
+    : c.mail ? 'mailto:' + encodeURIComponent(c.mail).replace(/%40/g, '@') : '');
+
+  /* Liste courte des contacts d'urgence : 5 au maximum, uniquement ceux de annuaire.json.
+   * Sert à la fois au bouton « J'ai besoin d'aide maintenant » et à l'onglet Aide, dont le
+   * HTML de index.html n'est qu'un repli identique si le fichier ne se charge pas. */
+  function rendreNumeros(zone) {
+    if (!zone || !ANNUAIRE || !ANNUAIRE.urgences) return;
+    zone.innerHTML = ANNUAIRE.urgences.slice(0, 5).map((c) => {
+      const lien = lienContact(c); if (!lien) return '';
+      return '<a class="numero" data-externe href="' + esc(lien) + '"><b>' + esc(nomContact(c)) + '</b><span>' +
+        esc(c.affichage || '') + '</span><small>' + esc(c.desc ? t(c.desc) : '') + '</small></a>';
+    }).join('');
+  }
+
+  /* ================= Liens sortants (tel:, mailto:) =================
+   * Dans un WebView Capacitor, une ancre ordinaire n'ouvre pas toujours le téléphone ou le
+   * courrier : on force donc l'ouverture. AppLauncher s'il est déjà installé, sinon une
+   * navigation directe, que Capacitor transforme en Intent Android. Aucune dépendance ajoutée.
+   * Le href reste présent : appui long, accessibilité et navigateur de bureau continuent de marcher. */
+  function ouvrirExterne(url) {
+    try {
+      const A = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.AppLauncher;
+      if (A && A.openUrl) { A.openUrl({ url: url }).catch(() => { window.location.href = url; }); return; }
+    } catch (e) { /* on retombe sur la navigation directe */ }
+    window.location.href = url;
+  }
+  document.addEventListener('click', (ev) => {
+    const a = ev.target.closest && ev.target.closest('a[data-externe]'); if (!a) return;
+    const url = a.getAttribute('href'); if (!url) return;
+    ev.preventDefault(); ouvrirExterne(url);
+  });
+
+  /* ================= Action unique =================
+   * Après un verdict, Vigie ne propose plus une liste de conseils mais UNE action, la bonne,
+   * immédiatement exécutable. L'ordre de décision compte : une menace envers une personne passe
+   * avant l'argent, parce qu'un appel à la police ne peut pas attendre un virement. */
+  function famille(r, t2) {
+    if (MOTIFS.proche && MOTIFS.proche.test(t2)) return 'proche';
+    const org = (ANNUAIRE && ANNUAIRE.organismes) || {};
+    for (let i = 0; i < r.marques.length; i++) { const f = org[r.marques[i]]; if (f) return f; }
+    return 'autre';
+  }
+  function choisirAction(r, texte) {
+    const t2 = VigieRegles.sansAccents(texte || '');
+    const vu = (k) => !!(MOTIFS[k] && MOTIFS[k].test(t2));
+    if (r.verdict === 'vert') return { type: 'vert' };
+    if (r.verdict === 'rouge') {
+      if (vu('menace') && contact('police')) return { type: 'police', c: contact('police') };
+      if (vu('argent') && contact('cardstop')) return { type: 'cardstop', c: contact('cardstop') };
+      if (contact('safeonweb')) return { type: 'signaler', c: contact('safeonweb') };
+      return { type: 'aucune' };
+    }
+    const f = famille(r, t2);
+    return { type: 'verifier', famille: f, marque: f === 'proche' ? null : (r.marques[0] || null) };
+  }
+
+  /* Un seul bloc visuellement dominant par écran : soit un gros bouton d'appel, soit la consigne. */
+  function htmlAction(a, texte, v) {
+    if (a.type === 'aucune') return '';
+    const tete = '<span class="action-sur">' + esc(t('act.titre')) + '</span>';
+    if (a.type === 'vert') {
+      return '<section class="action action-vert"><h2>' + esc(t('act.vert.titre')) + '</h2><p>' + esc(t('act.vert.quoi')) + '</p></section>';
+    }
+    if (a.type === 'verifier') {
+      const consignes = (ANNUAIRE && ANNUAIRE.consignes) || {};
+      const cle = consignes[a.famille] || consignes.autre;
+      let s = '<section class="action action-orange">' + tete + '<h2>' + esc(t('act.ver.titre')) + '</h2>' +
+        '<p class="action-consigne">' + esc(cle ? t(cle) : t('act.ver.autre')) + '</p>' +
+        '<p class="action-quoi">' + esc(t('act.ver.quoi')) + '</p>';
+      const off = a.marque && R.marques && R.marques[a.marque];
+      if (off && off.length) s += '<p class="note">' + esc(t('act.ver.site', { m: a.marque, s: off.join(', ') })) + '</p>';
+      return s + '</section>';
+    }
+    const cle = a.type === 'police' ? 'pol' : a.type === 'cardstop' ? 'cs' : 'sig';
+    let lien = lienContact(a.c);
+    if (a.type === 'signaler') {
+      lien += '?subject=' + encodeURIComponent(t('res.mail.sujet')) + '&body=' + encodeURIComponent(texte.slice(0, 1500));
+    }
+    const icone = a.type === 'signaler' ? 'i-mail' : 'i-tel';
+    return '<section class="action action-' + (a.type === 'signaler' ? 'rouge-mail' : 'rouge') + '">' + tete +
+      '<a class="btn btn-action" data-externe href="' + esc(lien) + '"><svg aria-hidden="true"><use href="#' + icone + '"/></svg>' +
+      '<span>' + esc(t('act.' + cle + '.btn')) + (a.type === 'signaler' ? '' : '<small>' + esc(a.c.affichage || '') + '</small>') + '</span></a>' +
+      '<p class="action-quoi">' + esc(t('act.' + cle + '.quoi')) + '</p>' +
+      '<p class="note">' + esc(t('act.' + cle + '.apres')) + '</p></section>';
+  }
+
   /* ================= Résultat ================= */
   const ICONE = { rouge: 'danger', orange: 'attention', vert: 'ok' }, NIVEAU = { rouge: 3, orange: 2, vert: 1 };
   function afficher(texte, depuisPhoto, empiler, enregistrer) {
@@ -366,25 +474,42 @@
       '<div class="verdict-etiquette">' + esc(t('v.' + v + '.etiq')) + '</div><h1>' + esc(t('v.' + v + '.titre')) + '</h1></div></div><p>' + esc(t('v.' + v + '.texte')) + '</p>' +
       '<div class="niveau" role="img" aria-label="' + esc(t('niv.titre') + ' : ' + lib) + '"><span class="niveau-lib">' + esc(t('niv.titre')) + ' : <b>' + esc(lib) + '</b></span>' +
       '<span class="niveau-barre n' + n + '"><i></i><i></i><i></i></span></div></section>';
-    h += '<section class="carte"><h2>' + esc(t('res.faire')) + '</h2><ol class="etapes">' + conseils.slice(0, 3).map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol>';
-    if (conseils.length > 3) h += '<div class="encadre">' + conseils.slice(3).map((x) => '<p>' + esc(x) + '</p>').join('') + '</div>';
-    h += '</section>';
-    if (r.raisons.length) h += '<details' + (v !== 'vert' ? ' open' : '') + '><summary>' + esc(t('res.pourquoi')) + '</summary><div class="details-corps"><ul>' +
-      r.raisons.slice(0, 3).map((x, i) => { const c = r.codes && r.codes[i]; return '<li>' + esc(c ? t(c.k, c.p) : x) + '</li>'; }).join('') + '</ul></div></details>';
+
+    /* L'action d'abord : la mise en sécurité ne doit pas attendre la lecture d'une explication. */
+    const action = choisirAction(r, texte);
+    const bloc = htmlAction(action, texte, v);
+    h += bloc;
+    /* Repli si annuaire.json ne s'est pas chargé : on remet la liste de conseils, jamais un numéro inventé. */
+    if (!bloc) h += '<section class="carte"><h2>' + esc(t('res.faire')) + '</h2><ol class="etapes">' +
+      conseils.slice(0, 3).map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol></section>';
+
+    /* Bouton secondaire permanent : les contacts d'urgence, à portée de main sur tous les verdicts. */
+    h += '<details class="aide-vite"><summary><svg aria-hidden="true"><use href="#i-tel"/></svg>' + esc(t('act.aide.btn')) + '</summary>' +
+      '<div class="details-corps"><div class="numeros-grille" id="res-numeros"></div><p class="note" style="margin-top:12px">' + esc(t('act.aide.intro')) + '</p></div></details>';
+
+    /* Puis l'explication : pourquoi ce verdict, et les autres précautions. */
+    h += '<details class="pourquoi"><summary>' + esc(t('res.pourquoi.t')) + '</summary><div class="details-corps">';
+    if (r.raisons.length) h += '<p class="etiquette">' + esc(t('res.pourquoi')) + '</p><ul>' +
+      r.raisons.slice(0, 3).map((x, i) => { const c = r.codes && r.codes[i]; return '<li>' + esc(c ? t(c.k, c.p) : x) + '</li>'; }).join('') + '</ul>';
+    h += '<p class="etiquette">' + esc(t('res.faire')) + '</p><ul>' + conseils.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div></details>';
+
     h += '<details><summary>' + esc(t(depuisPhoto ? 'res.lu' : 'res.voir')) + '</summary><div class="details-corps"><p class="message-brut">' + esc(texte) + '</p>' +
       (depuisPhoto ? '<p class="note">' + esc(t('res.reprendre')) + '</p>' : '') + '</div></details>';
     h += '<div class="actions-duo"><button class="btn btn-secondaire" type="button" id="ecouter"><svg aria-hidden="true"><use href="#i-son"/></svg>' + esc(t('res.ecouter')) + '</button>' +
       '<button class="btn btn-secondaire" type="button" id="autre"><svg aria-hidden="true"><use href="#i-retour"/></svg>' + esc(t('res.autre')) + '</button></div>';
-    const corps = encodeURIComponent(texte.slice(0, 1500));
-    h += '<div class="actions-duo" style="margin-top:12px">' +
-      (v !== 'vert' ? '<a class="btn btn-secondaire" href="mailto:suspect@safeonweb.be?subject=' + encodeURIComponent(t('res.mail.sujet')) + '&body=' + corps + '"><svg aria-hidden="true"><use href="#i-mail"/></svg>' + esc(t('res.signaler')) + '</a>' : '') +
-      (navigator.share ? '<button class="btn btn-secondaire" type="button" id="partager"><svg aria-hidden="true"><use href="#i-partager"/></svg>' + esc(t('res.partager')) + '</button>' : '') + '</div>';
+    if (navigator.share) h += '<div class="actions-duo" style="margin-top:12px"><button class="btn btn-secondaire" type="button" id="partager">' +
+      '<svg aria-hidden="true"><use href="#i-partager"/></svg>' + esc(t('res.partager')) + '</button></div>';
     $('vue-resultat').innerHTML = h;
-    $('ecouter').onclick = () => parler($('reponse').innerText + '. ' + document.querySelector('ol.etapes').innerText);
+    rendreNumeros($('res-numeros'));
+    const dire = () => {
+      const a = document.querySelector('.action');
+      return $('reponse').innerText + '. ' + (a ? a.innerText : conseils.slice(0, 3).join(' '));
+    };
+    $('ecouter').onclick = () => parler(dire());
     $('autre').onclick = () => { $('texte').value = ''; reinitialiser(); vue('accueil', true); };
     if ($('partager')) $('partager').onclick = () => navigator.share({ title: t('res.share.titre'), text: 'Vigie : ' + t('v.' + v + '.etiq') + '\n\n' + texte.slice(0, 1500) }).catch(() => {});
     vue('resultat', empiler !== false);
-    if (enregistrer && prefs.voix) parler(t('v.' + v + '.etiq') + '. ' + t('v.' + v + '.titre') + '. ' + conseils.slice(0, 3).join(' '));
+    if (enregistrer && prefs.voix) parler(dire());
   }
 
   /* ================= Voix =================
@@ -540,8 +665,10 @@
   /* ================= Démarrage ================= */
   fetch('regles.json').then((r) => r.json()).then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); })
     .catch(() => erreur(t('err.regles')));
+  /* L'annuaire n'est pas vital : s'il manque, Vigie affiche les conseils au lieu de l'action, sans jamais inventer de numéro. */
+  fetch('annuaire.json').then((r) => r.json()).then(chargerAnnuaire).catch(() => { ANNUAIRE = null; });
   appliquerPrefs();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
   if (!lire('vigie.bienvenue', 0)) { vue('bienvenue', false); pasBienvenue(0); } else vue('accueil', false);
-  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages };   // pour les tests automatiques
+  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages, choisirAction };   // pour les tests automatiques
 })();
