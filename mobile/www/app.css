@@ -224,3 +224,6 @@ details.carte-ligne{margin-bottom:10px}
   padding:16px;min-height:62px;font-weight:800;font-size:1.02rem}
 .btn-urgence svg{width:24px;height:24px}
 .acc-note{text-align:center;margin-top:16px}
+
+/* Si le message copié est déjà proposé en haut, le gros bouton « Coller » ferait doublon. */
+#pp:not([hidden]) ~ #formulaire .geste{display:none}

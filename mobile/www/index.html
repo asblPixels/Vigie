@@ -70,52 +70,19 @@
   <div class="alerte" id="erreur" role="alert" hidden><svg aria-hidden="true"><use href="#i-attention"/></svg><span id="erreur-texte"></span></div>
 
   <form id="formulaire" novalidate>
-    <!-- Un seul geste visible. Tout le reste est replié : c'est la photo que les gens font. -->
-    <label class="geste" for="camera">
-      <svg aria-hidden="true"><use href="#i-photo"/></svg>
-      <span data-i18n="acc.photo">Prendre en photo</span>
-    </label>
-    <input type="file" id="camera" accept="image/*" capture="environment">
-
-    <label class="geste geste-2" for="galerie">
-      <svg aria-hidden="true"><use href="#i-galerie"/></svg>
-      <span data-i18n="acc.capture">Capture d'écran</span>
-    </label>
-    <input type="file" id="galerie" accept="image/*">
-
-    <details class="replie">
-      <summary data-i18n="acc.label">Collez le texte du message</summary>
-      <textarea id="texte" data-i18n-ph="acc.placeholder" placeholder="Exemple : « Votre colis est en attente, payez 1,99 € ici… »"></textarea>
-      <button class="btn btn-secondaire" type="button" id="coller"><svg aria-hidden="true"><use href="#i-coller"/></svg><span data-i18n="acc.coller">Coller</span></button>
-      <button class="btn btn-principal" type="submit" id="verifier"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="acc.verifier">Vérifier le message</span></button>
-    </details>
+    <!-- Un seul geste : coller le message. Vigie le lit et répond aussitôt. -->
+    <button class="geste" type="button" id="coller">
+      <svg aria-hidden="true"><use href="#i-coller"/></svg>
+      <span data-i18n="acc.coller.geste">Coller le message et vérifier</span>
+    </button>
+    <textarea id="texte" data-i18n-ph="acc.placeholder" placeholder="Exemple : « Votre colis est en attente, payez 1,99 € ici… »"></textarea>
+    <button class="btn btn-principal" type="submit" id="verifier"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="acc.verifier">Vérifier le message</span></button>
   </form>
 
   <button class="btn-urgence" type="button" data-vue="aide"><svg aria-hidden="true"><use href="#i-danger"/></svg><span data-i18n="acc.danger">Je suis en danger</span></button>
   <p class="note acc-note" data-i18n="acc.local">Tout reste sur ce téléphone.</p>
 </section>
 
-<section class="vue" id="vue-scan" aria-live="polite">
-  <span class="surtitre" data-i18n="s.surtitre.photo" id="scan-surtitre">Analyse de la photo</span>
-  <div class="scan-carte" aria-hidden="true">
-    <img id="scan-photo" alt="" hidden>
-    <div class="scan-texte" id="scan-texte" hidden></div>
-    <div class="faisceau"></div>
-    <i class="coin h-g"></i><i class="coin h-d"></i><i class="coin b-g"></i><i class="coin b-d"></i>
-  </div>
-  <div class="scan-chiffre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-i18n-aria="s.aria" aria-label="Progression de l'analyse" id="barre">
-    <span id="scan-pct">0</span><small>%</small>
-  </div>
-  <div class="barre"><span id="barre-int"></span></div>
-  <p class="scan-statut" id="scan-statut"></p>
-  <ol class="scan-etapes" id="scan-etapes">
-    <li><span id="etape-0-txt">Photo préparée</span></li>
-    <li><span data-i18n="s.e1">Lecture du texte</span></li>
-    <li><span data-i18n="s.e2">Recherche d'indices connus</span></li>
-    <li><span data-i18n="s.e3">Verdict</span></li>
-  </ol>
-  <button class="btn btn-secondaire" type="button" id="scan-annuler"><span data-i18n="s.annuler">Annuler</span></button>
-</section>
 
 <section class="vue" id="vue-resultat"></section>
 
@@ -233,6 +200,5 @@
 
 <script src="regles.js"></script>
 <script src="i18n.js"></script>
-<script src="ocr/tesseract.min.js"></script>
 <script src="app.js"></script>
 </body></html>

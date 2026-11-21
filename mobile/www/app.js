@@ -1,15 +1,15 @@
 /* Vigie — application Android autonome. GPL-3.0
- * Tout se passe sur le téléphone : lecture de la photo (Tesseract.js, embarqué), analyse (regles.js), voix. */
+ * Tout se passe sur le téléphone : analyse du texte (regles.js) et voix. */
 (function () {
   'use strict';
-  const VERSION = '0.5.0';
+  const VERSION = '0.6.0';
   const $ = (id) => document.getElementById(id);
   const pause = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const lire = (cle, defaut) => { try { const v = JSON.parse(localStorage.getItem(cle)); return v == null ? defaut : v; } catch (e) { return defaut; } };
   const ecrire = (cle, v) => { try { localStorage.setItem(cle, JSON.stringify(v)); } catch (e) { /* stockage plein ou refusé : on continue */ } };
 
-  let R = null, analyser = null, travailleur = null, dernier = null, annule = false, photoEnCours = true;
+  let R = null, analyser = null, dernier = null, annule = false;
 
   /* ================= Préférences ================= */
   const LANGUES = ['fr', 'nl', 'it', 'de'];
@@ -32,11 +32,8 @@
     document.querySelectorAll('[data-i18n-ph]').forEach((e) => { e.placeholder = t(e.dataset.i18nPh); });
     document.querySelectorAll('[data-i18n-aria]').forEach((e) => { e.setAttribute('aria-label', t(e.dataset.i18nAria)); });
     $('version-ligne').textContent = t('p.version', { v: VERSION });
-    /* Diagnostic visible : sans lui, un échec de la lecture rapide reste invisible. */
-    $('version-ligne').textContent += ' · ' + t('p.diag') + ' : ' + DIAG + (DERNIERE_ERREUR ? ' (' + DERNIERE_ERREUR + ')' : '');
     document.querySelectorAll('button[data-langue]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.langue === prefs.langue)));
     if (!$('histo-effacer-txt').dataset.attente) $('histo-effacer-txt').textContent = t('h.effacer');
-    $('etape-0-txt').textContent = t(photoEnCours ? 's.e0.photo' : 's.e0.msg');
     rendreNumeros($('aide-numeros'));   // la grille vient de annuaire.json : elle n'a pas d'attribut data-i18n
     rendreDanger();
     if (typeof pasBienvenue === 'function' && typeof piste !== 'undefined') pasBienvenue();   // le bouton du carrousel suit la langue
@@ -79,7 +76,7 @@
   }
   window.addEventListener('popstate', (e) => {
     let n = (e.state && e.state.v) || 'accueil';
-    if (n === 'scan' || n === 'bienvenue') n = 'accueil';
+    if (n === 'bienvenue') n = 'accueil';
     if (n === 'resultat' && dernier && analyser) afficher(dernier.t, dernier.p, false, false); else vue(n, false);
   });
   document.querySelectorAll('button[data-vue]').forEach((b) => b.addEventListener('click', () => {
@@ -90,282 +87,13 @@
 
   const erreur = (m) => { $('erreur').hidden = !m; $('erreur-texte').textContent = m || ''; };
 
-  /* ================= Préparation de la photo ================= */
-  // Redresse la photo (EXIF), passe en niveaux de gris, étire le contraste, inverse les écrans sombres,
-  // puis découpe en bandes (aux lignes vides) pour lire plusieurs bandes en parallèle.
-  function nbBandes(w, h) {
-    const pix = w * h, coeurs = navigator.hardwareConcurrency || 4, ram = navigator.deviceMemory || 4;
-    if (pix < 500000 || coeurs < 2) return 1;
-    return Math.max(1, Math.min(4, coeurs - 1, pix > 1500000 ? 4 : 2));   // tous les cœurs disponibles, sans plafond artificiel
-  }
-  async function preparer(fichier, max) {
-    max = max || 2600;
-    const bmp = await createImageBitmap(fichier, { imageOrientation: 'from-image' });
-    const cote = Math.max(bmp.width, bmp.height);
-    let k = cote < 1600 ? 1600 / cote : (cote > max ? max / cote : 1);
-    if (bmp.width * bmp.height * k * k > 4.2e6) k = Math.sqrt(4.2e6 / (bmp.width * bmp.height));   // photo géante : on borne le travail
-    const c = document.createElement('canvas');
-    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
-    const g = c.getContext('2d', { willReadFrequently: true });
-    g.drawImage(bmp, 0, 0, c.width, c.height);
-    if (bmp.close) bmp.close();
-    const W = c.width, H = c.height;
-    const im = g.getImageData(0, 0, W, H), d = im.data, n = d.length / 4;
-    let h = new Uint32Array(256), somme = 0, i;
-    for (i = 0; i < d.length; i += 4) {
-      const y = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
-      d[i] = y; h[y]++; somme += y;
-    }
-    const inverser = (somme / n) < 110;                 // écran sombre, texte clair
-    if (inverser) { const h2 = new Uint32Array(256); for (i = 0; i < 256; i++) h2[255 - i] = h[i]; h = h2; }
-    const coupe = n * 0.001; let bas = 0, haut = 255, acc = 0;   // étirement du contraste (0,1 % de chaque côté)
-    for (i = 0; i < 256; i++) { acc += h[i]; if (acc > coupe) { bas = i; break; } }
-    acc = 0; for (i = 255; i >= 0; i--) { acc += h[i]; if (acc > coupe) { haut = i; break; } }
-    if (haut - bas < 64) { bas = 0; haut = 255; }         // texte très rare : on n'étire pas, pour ne rien perdre
-    const ech = 255 / (haut - bas);
-    const s1 = new Float64Array(H), s2 = new Float64Array(H);
-    let sombre = 0, clair = 0;
-    for (let y = 0; y < H; y++) {
-      let a = 0, b = 0;
-      for (let x = 0, p = y * W * 4; x < W; x++, p += 4) {
-        let v = inverser ? 255 - d[p] : d[p];
-        v = Math.max(0, Math.min(255, Math.round((v - bas) * ech)));
-        d[p] = d[p + 1] = d[p + 2] = v; d[p + 3] = 255;
-        a += v; b += v * v; if (v < 80) sombre++; else if (v > 175) clair++;
-      }
-      s1[y] = a; s2[y] = b;
-    }
-    g.putImageData(im, 0, 0);
-    // Polarité mixte (bulles claires et sombres) : Tesseract doit lire aussi l'image inversée. Sinon on économise cette passe.
-    const mixte = (sombre / n) > 0.12 && (clair / n) > 0.12;
-    // Coupures : on choisit, près de chaque tiers, la ligne la plus uniforme (un interligne), pour ne jamais couper un mot.
-    const nb = nbBandes(W, H), coupures = [0];
-    for (let q = 1; q < nb; q++) {
-      const cibleY = Math.round(H * q / nb), fen = Math.round(H * 0.1);
-      let meilleur = cibleY, vmin = Infinity;
-      for (let y = Math.max(coupures[q - 1] + 50, cibleY - fen); y < Math.min(H - 50, cibleY + fen); y++) {
-        const moy = s1[y] / W, vari = s2[y] / W - moy * moy;
-        if (vari < vmin - 1e-6) { vmin = vari; meilleur = y; }
-      }
-      coupures.push(meilleur);
-    }
-    coupures.push(H);
-    const bandes = [];
-    for (let q = 0; q < nb; q++) {
-      const y0 = coupures[q], hh = coupures[q + 1] - y0, cb = document.createElement('canvas');
-      cb.width = W; cb.height = hh;
-      cb.getContext('2d').drawImage(c, 0, y0, W, hh, 0, 0, W, hh);
-      bandes.push(await new Promise((ok, ko) => cb.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/png')));
-    }
-    return { bandes, mixte };
-  }
 
-  /* ================= Lecture (OCR) hors ligne, en parallèle ================= */
-  const simd = () => {
-    try { return WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1, 8, 0, 65, 0, 253, 15, 253, 98, 11])); } catch (e) { return false; }
-  };
-  let pool = [], initp = [], prog = [], phase = 0, nPhases = 1, minuteurLiberation = 0;
-  function majCible() {
-    const n = Math.max(1, pool.length);
-    let ini = 0, rec = 0;
-    for (let i = 0; i < n; i++) { ini += initp[i] || 0; rec += prog[i] || 0; }
-    ini /= n; rec /= n;
-    const total = Math.min(0.97, (phase + rec) / nPhases);
-    cible = Math.max(cible, 14 + ini * 14, total > 0 ? 28 + total * 58 : 0);
-  }
-  function creerTravailleur(i) {
-    const base = new URL('ocr/', location.href).href;
-    return Tesseract.createWorker('fra', 1, {
-      workerPath: base + 'worker.min.js',
-      corePath: base + (simd() ? 'tesseract-core-simd-lstm.wasm.js' : 'tesseract-core-lstm.wasm.js'),
-      langPath: base, gzip: true, cacheMethod: 'none', workerBlobURL: false,
-      logger: (m) => {
-        if (m.status === 'recognizing text') { prog[i] = m.progress; majCible(); }
-        else if (m.status && /load|init/.test(m.status)) { initp[i] = Math.max(initp[i] || 0, m.progress || 0); majCible(); }
-      }
-    });
-  }
-  function obtenirTravailleurs(n) {
-    clearTimeout(minuteurLiberation);
-    while (pool.length < n) { const i = pool.length, p = creerTravailleur(i); p.catch(() => { if (pool[i] === p) pool = []; }); pool.push(p); }
-    return Promise.all(pool.slice(0, n));
-  }
-  function libererTravailleurs() {
-    clearTimeout(minuteurLiberation);
-    pool.forEach((p) => p.then((w) => w.terminate()).catch(() => {}));
-    pool = []; initp = []; prog = []; phase = 0; nPhases = 1;
-  }
-  const planifierLiberation = () => { clearTimeout(minuteurLiberation); minuteurLiberation = setTimeout(libererTravailleurs, 60000); };   // rend la mémoire au téléphone
-  const delaiMax = (ms) => { let t; const p = new Promise((_, ko) => { t = setTimeout(() => ko(new Error('delai')), ms); }); p.stop = () => clearTimeout(t); return p; };
-  async function inverserImage(blob) {
-    const bmp = await createImageBitmap(blob), c = document.createElement('canvas');
-    c.width = bmp.width; c.height = bmp.height;
-    const g = c.getContext('2d'); g.drawImage(bmp, 0, 0);
-    g.globalCompositeOperation = 'difference'; g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-    if (bmp.close) bmp.close();
-    return new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/png'));
-  }
-  const lireBandes = (ws, images) => Promise.all(ws.map(async (w, i) => (await w.recognize(images[i])).data.text || ''));
 
-  async function lireImages(bandes, mixte) {
-    const ws = await obtenirTravailleurs(bandes.length);
-    if (annule) return '';
-    etape(1, t('s.st.lecture'));
-    prog = []; phase = 0; nPhases = mixte ? 2 : 1;
-    const dur = delaiMax(150000);
-    try {
-      await Promise.all(ws.map((w) => w.setParameters({ tessedit_do_invert: '0' })));
-      // Passe 1 : lecture normale. Elle suffit presque toujours et donne déjà un texte exploitable.
-      let texte = (await Promise.race([dur, lireBandes(ws, bandes)])).join('\n');
-      if (mixte && !annule) {
-        // Passe 2 (bulles de couleurs opposées) : lue sur l'image inversée, avec un délai. Trop lente, on garde la passe 1.
-        phase = 1; prog = [];
-        $('scan-statut').textContent = t('s.st.lecture');
-        const inv = await Promise.all(bandes.map(inverserImage));
-        const court = delaiMax(35000);
-        try {
-          const t2 = (await Promise.race([court, dur, lireBandes(ws, inv)])).join('\n');
-          texte += '\n' + t2;
-        } catch (e) {
-          if (!e || e.message !== 'delai' || texte.replace(/\s/g, '').length < 12) throw e;
-          libererTravailleurs();                      // la 2e passe s'éternise : on arrête et on garde la 1re
-        } finally { court.stop(); }
-      }
-      cible = Math.max(cible, 86);
-      if (pool.length) planifierLiberation();
-      return texte;
-    } catch (e) { libererTravailleurs(); throw e; } finally { dur.stop(); }
-  }
 
-  /* ================= Écran de scan : gros pourcentage, faisceau, étapes ================= */
-  let cible = 0, aff = 0, raf = 0, rapide = false;
-  /* Sur la voie rapide (lecture native ou texte collé) il n'y a rien à attendre :
+
+  /* Plus d'écran d'attente : l'analyse d'un texte prend moins d'une milliseconde,
      faire patienter devant une barre de progression serait du décor. */
-  const attendre = async (p) => { if (rapide) return; while (!annule && aff < p - 0.5) await pause(16); };
-
-  function boucleScan() {
-    aff += (cible - aff) * (rapide ? 0.5 : 0.15);
-    if (Math.abs(cible - aff) < 0.4) aff = cible;
-    $('scan-pct').textContent = Math.round(aff);
-    $('barre-int').style.width = aff + '%';
-    $('barre').setAttribute('aria-valuenow', Math.round(aff));
-    raf = requestAnimationFrame(boucleScan);
-  }
-  function etape(i, libelle) {
-    document.querySelectorAll('#scan-etapes li').forEach((li, k) => { li.className = k < i ? 'fait' : k === i ? 'actif' : ''; });
-    if (libelle) $('scan-statut').textContent = libelle;
-  }
-  function demarrerScan(photoURL, texte) {
-    annule = false; cible = 0; aff = 0; rapide = !photoURL; erreur(''); ppCacher();
-    $('scan-photo').hidden = !photoURL;
-    if (photoURL) $('scan-photo').src = photoURL;
-    $('scan-texte').hidden = !!photoURL;
-    if (!photoURL) $('scan-texte').textContent = texte.slice(0, 280);
-    photoEnCours = !!photoURL;
-    $('scan-surtitre').textContent = t(photoURL ? 's.surtitre.photo' : 's.surtitre.msg');
-    $('etape-0-txt').textContent = t(photoURL ? 's.e0.photo' : 's.e0.msg');
-    etape(0, t(photoURL ? 's.st.prep' : 's.st.recu'));
-    cancelAnimationFrame(raf); boucleScan();
-    vue('scan', true);
-  }
-  function finScan() { cancelAnimationFrame(raf); }
-  $('scan-annuler').addEventListener('click', () => { annule = true; finScan(); reinitialiser(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil'); });
-
-  async function conclure(texte, photo) {
-    etape(2, t('s.st.indices')); cible = 90; await attendre(88); if (annule) return;
-    await pause(rapide ? 0 : 200); if (annule) return;
-    etape(3, t('s.e3')); cible = 100; await attendre(99.5); if (annule) return;
-    await pause(rapide ? 0 : 200); if (annule) return;
-    finScan(); afficher(texte, photo, true, true);
-  }
-
-  /* Lecture native Android (ML Kit, embarquée) : quasi instantanée. Sinon on retombe sur Tesseract. */
-  /* On n'exige plus isNativePlatform() : si le pont Capacitor est là, le plugin natif l'est aussi.
-     Cette condition était la raison pour laquelle l'application retombait sur la lecture de
-     secours — des minutes d'attente — alors que ML Kit était disponible. */
-  const natif = () => {
-    try {
-      if (!window.Capacitor || !Capacitor.registerPlugin) { DIAG = 'pont Capacitor absent'; return null; }
-      const p = Capacitor.registerPlugin('LectureTexte');
-      if (!p || !p.lire) { DIAG = 'plugin LectureTexte absent'; return null; }
-      DIAG = 'disponible'; return p;
-    } catch (e) { DIAG = 'erreur : ' + (e && e.message); return null; }
-  };
-  /* Dernière erreur de lecture native, affichée dans À propos : sans elle, un échec est muet
-     et l'application passe en lecture de secours sans que personne sache pourquoi. */
-  let DERNIERE_ERREUR = '', DIAG = 'non testée';
-
-  async function lireNatif(fichier, plugin) {
-    /* 1600 px suffisent largement à ML Kit pour une capture d'écran, et le passage de l'image
-       vers la partie native coûte moins cher : c'est ce transfert, pas la lecture, qui est lourd. */
-    /* Décoder l'image directement à la taille voulue : sur une capture d'écran de 3000 px,
-       décoder en entier puis redessiner coûte bien plus cher que la lecture elle-même. */
-    let bmp = null;
-    try { bmp = await createImageBitmap(fichier, { resizeWidth: 1280, resizeQuality: 'medium', imageOrientation: 'from-image' }); } catch (e) { bmp = null; }
-    if (!bmp) { try { bmp = await createImageBitmap(fichier, { resizeWidth: 1280 }); } catch (e) { bmp = null; } }
-    if (!bmp) bmp = await createImageBitmap(fichier);
-    const k = Math.min(1, 1280 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
-    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
-    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); if (bmp.close) bmp.close();
-    const blob = await new Promise((ok, ko) => c.toBlob((b) => (b ? ok(b) : ko(new Error('toBlob'))), 'image/jpeg', 0.7));
-    const data = await new Promise((ok, ko) => { const f = new FileReader(); f.onload = () => ok(String(f.result).split(',')[1]); f.onerror = ko; f.readAsDataURL(blob); });
-    cible = 60;
-    /* Si la partie native ne répond pas, on ne reste pas suspendu : mieux vaut le dire tout de suite. */
-    const r = await Promise.race([
-      plugin.lire({ data }),
-      new Promise((ok, ko) => setTimeout(() => ko(new Error('la lecture native n\'a pas répondu en 8 s')), 8000)),
-    ]);
-    return r.texte || '';
-  }
-
-  async function analyserPhoto(fichier) {
-    const url = URL.createObjectURL(fichier);
-    demarrerScan(url);
-    // le pourcentage ne reste jamais figé : il avance doucement entre deux vrais signaux du moteur de lecture
-    /* L'animation d'attente ne concerne que la lecture de secours : la lecture native est instantanée. */
-    const creep = setInterval(() => { if (!rapide && cible >= 14 && cible < 86) cible += (86 - cible) * 0.014; }, 250);
-    const patience = setTimeout(() => { if (!rapide) $('scan-statut').textContent = t('s.st.long'); }, 12000);
-    try {
-      cible = 6;
-      const N = natif();
-      let texte = null;
-      if (N) {
-        rapide = true;
-        try { texte = (await lireNatif(fichier, N)).trim(); cible = 88; DERNIERE_ERREUR = ''; }
-        catch (e) {
-          /* Sur Android, la lecture native est la seule rapide. Si elle échoue, la lecture de
-             secours prend des minutes : c'est pire que de ne rien faire. On le dit et on s'arrête. */
-          DERNIERE_ERREUR = (e && (e.message || e.errorMessage)) || 'erreur inconnue';
-          finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
-          erreur(t('err.lecture') + ' (' + DERNIERE_ERREUR + ')');
-          return;
-        }
-      }
-      if (annule) return;
-      if (texte === null) {
-        /* Version web uniquement : pas de lecture native disponible. */
-        const { bandes, mixte } = await preparer(fichier); if (annule) return;
-        cible = 14;
-        texte = (await lireImages(bandes, mixte) || '').trim(); if (annule) return;
-      }
-      if (texte.replace(/\s/g, '').length < 12) {
-        finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
-        erreur(t('err.illisible'));
-        return;
-      }
-      $('texte').value = texte;
-      await conclure(texte, true);
-    } catch (e) {
-      finScan(); vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
-      erreur(t(e && e.message === 'delai' ? 'err.delai' : 'err.echec'));
-    } finally { clearInterval(creep); clearTimeout(patience); URL.revokeObjectURL(url); reinitialiser(); }
-  }
-
-  async function analyserTexte(texte) {
-    demarrerScan(null, texte);
-    cible = 50; await attendre(45); if (annule) return;
-    await conclure(texte, false);
-  }
+  function analyserTexte(texte) { afficher(texte, false, true, true); }
 
   /* ================= Historique (local, facultatif) ================= */
   const CLE_H = 'vigie.historique';
@@ -696,14 +424,13 @@
   }
 
   /* ================= Formulaire ================= */
-  function reinitialiser() { $('camera').value = ''; $('galerie').value = ''; }
-  ['camera', 'galerie'].forEach((id) => $(id).addEventListener('change', function () {
-    const f = this.files && this.files[0]; if (f && analyser) analyserPhoto(f);
-  }));
+  function reinitialiser() { }
   $('coller').addEventListener('click', () => {
-    const t = $('texte');
-    if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then((x) => { if (x) { t.value = x; ppCacher(); } t.focus(); }).catch(() => t.focus());
-    else t.focus();
+    const z = $('texte');
+    const lance = () => { const v = z.value.trim(); if (v && analyser) { ppCacher(); analyserTexte(v); } else z.focus(); };
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then((x) => { if (x) z.value = x; lance(); }).catch(lance);
+    } else lance();
   });
   $('formulaire').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -852,7 +579,7 @@
         $('texte').value = texte;
         await analyserTexte(texte);
       } else if (c.type === 'image') {
-        await analyserPhoto(blobBase64(c.image, c.mime));
+        erreur(t('err.image'));
       } else {
         echecPartage(c.type === 'trop-grande' ? 'err.partage.grande' : 'err.partage');
       }
@@ -871,7 +598,6 @@
       .then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); ppPlusTard(); }),
     annuairePret,
   ]).then(() => true).catch(() => { erreur(t('err.regles')); return false; });
-  natif();   // renseigne le diagnostic dès l'ouverture
   appliquerPrefs();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
   vue('accueil', false);   // plus de présentation : l'application s'ouvre sur ce qu'elle fait
@@ -885,5 +611,5 @@
     } catch (e) { /* pas d'écoute possible : le contenu sera pris au prochain démarrage */ }
     reprendrePartage(PARTAGE);
   }
-  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages, reprendrePartage, ppRegarder, choisirAction };   // pour les tests automatiques
+  window.__vigie = { afficher, analyserTexte, reprendrePartage, ppRegarder, choisirAction };   // pour les tests automatiques
 })();

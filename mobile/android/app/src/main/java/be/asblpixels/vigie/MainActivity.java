@@ -8,7 +8,6 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        registerPlugin(LectureTextePlugin.class);
         registerPlugin(PartagePlugin.class);
         super.onCreate(savedInstanceState);
         // Ouverte depuis le bouton « Partager » : le contenu attend que l'interface web soit prête.
