@@ -1,0 +1,97 @@
+{
+ "_lisez_ceci_avant_de_modifier": [
+  "RÈGLE DE SÉCURITÉ ABSOLUE — Vigie n'affiche JAMAIS un numéro de téléphone inventé, supposé,",
+  "repris d'un message analysé, ou trouvé sur un site non officiel. Un faux numéro dans une",
+  "application anti-arnaque serait exactement le danger que Vigie combat : la victime appellerait",
+  "l'escroc en croyant appeler sa banque.",
+  "",
+  "N'ajoutez un numéro dans « urgences » que s'il remplit les TROIS conditions suivantes :",
+  "  1. il est publié sur le site officiel de l'organisme (domaine officiel, pas un annuaire) ;",
+  "  2. il est national, gratuit ou au tarif normal, et joignable par tout le monde ;",
+  "  3. une personne de Pixel's ASBL l'a composé et vérifié, et a noté la date ci-dessous.",
+  "",
+  "Pour une banque, un opérateur ou une administration : n'inscrivez RIEN ici. Vigie ne compose",
+  "pas leur numéro, elle affiche la consigne officielle (« appelez le numéro au dos de votre",
+  "carte », « reprenez le numéro sur une facture papier »). C'est le rôle de « consignes ».",
+  "",
+  "Ce fichier est de la donnée, pas du code : il se met à jour sans toucher à app.js."
+ ],
+ "_verifie_le": "2026-11-21",
+ "urgences": [
+  {
+   "cle": "cardstop",
+   "nom": "Card Stop",
+   "tel": "078170170",
+   "affichage": "078 170 170",
+   "desc": "a.cs.d",
+   "_source": "cardstop.be — service belge officiel de blocage des cartes, 24 h/24, 7 j/7"
+  },
+  {
+   "cle": "police",
+   "nom_i18n": "a.pol.t",
+   "tel": "101",
+   "affichage": "101",
+   "desc": "a.pol.d",
+   "_source": "police.be — numéro d'appel de la police, Belgique, 24 h/24"
+  },
+  {
+   "cle": "urgences",
+   "nom_i18n": "a.urg.t",
+   "tel": "112",
+   "affichage": "112",
+   "desc": "a.urg.d",
+   "_source": "112.be — numéro d'urgence européen, 24 h/24"
+  },
+  {
+   "cle": "safeonweb",
+   "nom": "Safeonweb",
+   "mail": "suspect@safeonweb.be",
+   "affichage": "suspect@safeonweb.be",
+   "desc": "a.saf.d",
+   "_source": "safeonweb.be — Centre pour la Cybersécurité Belgique (CCB)"
+  }
+ ],
+ "motifs": {
+  "_note": "Expressions régulières appliquées au texte du message, accents retirés et en minuscules (voir sansAccents dans regles.js). Quatre langues : fr, nl, it, de.",
+  "argent": "carte (bancaire|de credit|de banque|visa|mastercard|maestro|bleue)|numero de (votre |ta )?carte|cvv|cvc|code pin|digipass|lecteur de carte|virement|iban|compte bancaire|paiement|payer|paye[zr]\\b|regle[zr]\\b|reglement|versez|verser|montant|facture|euros?\\b|€|western union|moneygram|paysafe|carte (cadeau|gift)|bitcoin|crypto|rembours|bankkaart|kredietkaart|overschrijving|betaal|betaling|rekeningnummer|bedrag|factuur|terugbetaling|bonifico|carta di (credito|debito)|pagare|pagamento|paga\\b|importo|fattura|rimborso|uberweisung|bankkarte|kreditkarte|zahlung|zahlen|bezahlen|betrag|rechnung|ruckerstattung|kontonummer",
+  "menace": "menaces? de mort|menace physique|(me|te|vous) menace|je vais te (tuer|retrouver|crever)|on va te (tuer|retrouver|faire la peau)|(te|vous) casser la gueule|(te|vous) tabasser|(te|vous) frapper|je te tue|je vais te faire du mal|tuer (ta|votre) famille|(on sait|je sais) ou (tu habites|vous habitez)|on connait (ton|votre) adresse|represailles|chantage|sextorsion|(diffuser|publier|envoyer) (tes|vos) (photos|videos|images)|photos intimes|videos intimes|brule(r)? (ta|votre) (maison|voiture)|bedreig|vermoorden|ik vermoord|ik weet waar (je|u) woont|afpersing|in elkaar slaan|minaccia|ti ammazzo|ucciderti|ti uccido|so dove abiti|ricatto|estorsione|morddrohung|bedrohen|umbringen|ich bringe dich um|ich weiss wo du wohnst|erpressung|zusammenschlagen",
+  "proche": "nouveau numero|nouveau num|c.est (moi|ton fils|ta fille|votre fils|votre fille)|\\b(maman|papa|mamy|papy|mamie|papi)\\b|telephone (est )?(casse|tombe|perdu)|nieuw nummer|het is (mama|papa)|nuovo numero|sono (tua|tuo) (figlio|figlia)|neue nummer|hier ist (mama|papa)"
+ },
+ "organismes": {
+  "_note": "Famille de chaque organisme reconnu par regles.json. Sert à choisir la consigne de vérification. Aucun numéro ici, volontairement.",
+  "belfius": "banque",
+  "ing": "banque",
+  "kbc": "banque",
+  "bnp paribas fortis": "banque",
+  "fortis": "banque",
+  "argenta": "banque",
+  "card stop": "banque",
+  "spf finances": "administration",
+  "myminfin": "administration",
+  "ebox": "administration",
+  "csam": "administration",
+  "itsme": "administration",
+  "police": "administration",
+  "bpost": "livraison",
+  "proximus": "service",
+  "orange": "service",
+  "engie": "service",
+  "luminus": "service",
+  "fluvius": "service",
+  "ores": "service",
+  "mutualite": "service",
+  "solidaris": "service",
+  "netflix": "commerce",
+  "amazon": "commerce"
+ },
+ "consignes": {
+  "_note": "Clé de traduction de la consigne officielle affichée pour chaque famille. Jamais un numéro : la consigne dit où l'utilisateur trouve lui-même le bon numéro.",
+  "banque": "act.ver.banque",
+  "administration": "act.ver.admin",
+  "livraison": "act.ver.livraison",
+  "service": "act.ver.service",
+  "commerce": "act.ver.commerce",
+  "proche": "act.ver.proche",
+  "autre": "act.ver.autre"
+ }
+}
