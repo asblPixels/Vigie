@@ -9,6 +9,7 @@
 
 **Français** · [Nederlands](README.nl.md) · [Italiano](README.it.md) · [Deutsch](README.de.md)
 
+![Version](https://img.shields.io/badge/version-0.4.0-0E2A38?style=flat-square)
 ![Licence](https://img.shields.io/badge/licence-GPL--3.0-0E2A38?style=flat-square)
 ![Android](https://img.shields.io/badge/Android-autonome-007A7A?style=flat-square)
 ![Linux](https://img.shields.io/badge/Linux-Fedora-007A7A?style=flat-square)
@@ -33,7 +34,7 @@
 
 ## En bref
 
-Un SMS, un courriel ou un courrier vous inquiète ? Vous le **photographiez** ou vous le **collez** dans Vigie. En quelques secondes, Vigie répond par l'un de trois verdicts, en grands caractères et en langage simple :
+Un SMS, un courriel ou un courrier vous inquiète ? Vous le **photographiez**, vous le **collez**, ou vous le **partagez** vers Vigie depuis l'application où il se trouve. En quelques secondes, Vigie répond par l'un de trois verdicts, en grands caractères et en langage simple :
 
 | Verdict | Ce que Vigie vous dit |
 |---|---|
@@ -42,6 +43,8 @@ Un SMS, un courriel ou un courrier vous inquiète ? Vous le **photographiez** ou
 | **Aucun signe connu** | Rien de suspect trouvé, mais restez attentif : ce n'est pas une garantie. |
 
 Vigie est pensée pour les personnes éloignées des outils numériques : un seul écran, un seul geste, de gros boutons, une police conçue pour la lisibilité, et une lecture à voix haute du résultat.
+
+Depuis la version **0.4.0**, Vigie vient au-devant du message : elle apparaît dans le bouton « Partager » d'Android, et quand vous venez de copier un message, elle propose de le vérifier. Elle ne décide jamais à votre place : c'est vous qui touchez « Vérifier ».
 
 ## Pourquoi Vigie
 
@@ -52,13 +55,30 @@ Vigie est pensée pour les personnes éloignées des outils numériques : un seu
 
 ## Dans l'application Android
 
+- **Partage système** : dans n'importe quelle application (Messages, Gmail, navigateur, galerie), « Partager » puis **« Vérifier avec Vigie »**. Le texte ou l'image part aussitôt à l'analyse et le verdict s'affiche sans autre geste, que Vigie soit fermée ou déjà ouverte. Un courriel partagé arrive avec son objet, qui porte souvent l'appât.
+- **Presse-papier** : à l'ouverture et à chaque retour dans l'application, Vigie propose de vérifier le message que vous venez de copier. Elle ne l'analyse **jamais** d'elle-même, ne propose **jamais deux fois** le même contenu, et n'en garde aucune copie en clair — seulement une empreinte courte et non réversible.
 - **Analyse animée** : pourcentage en grands chiffres, faisceau de scan sur la photo, étapes lues à l'écran.
-- **Niveau de risque** clair (faible, moyen, élevé) et **une seule action**, immédiatement exécutable : appeler Card Stop, appeler la police, signaler et supprimer, ou vérifier autrement. L'explication vient ensuite, sous « Pourquoi ? ».
-- **Numéros d'urgence vérifiés** (`mobile/www/annuaire.json`), accessibles depuis le résultat par « J'ai besoin d'aide maintenant ». Vigie ne compose **jamais** un numéro trouvé dans le message analysé.
+- **Niveau de risque** clair (faible, moyen, élevé) et **une seule action**, immédiatement exécutable : appeler Card Stop, appeler la police, signaler et supprimer, ou vérifier autrement. L'ordre de décision est explicite — une menace envers une personne passe avant l'argent. L'explication et les autres précautions viennent ensuite, repliées sous « Pourquoi ? ».
+- **Numéros d'urgence vérifiés** (`mobile/www/annuaire.json`), accessibles depuis le résultat par « J'ai besoin d'aide maintenant ». Vigie ne compose **jamais** un numéro trouvé dans le message analysé et n'en invente aucun.
 - **Historique** des messages vérifiés, gardé sur le téléphone, désactivable et effaçable en un geste.
 - **Aide** : que faire si l'on a cliqué, donné ses codes, payé ou reçu un faux appel de banque ; numéros utiles.
 - **Partager** le résultat en un geste. Le signalement à Safeonweb prépare un courriel : c'est l'utilisateur qui appuie sur « Envoyer ».
-- **Réglages** : taille du texte (3 niveaux), thème clair, sombre ou automatique, lecture à voix haute, langue (français, néerlandais, italien, allemand).
+- **Réglages** : taille du texte (3 niveaux), thème clair, sombre ou automatique, lecture à voix haute **avec le choix de la voix** et un bouton « Écouter un exemple », langue (français, néerlandais, italien, allemand).
+
+## Les numéros que Vigie affiche
+
+Un faux numéro dans une application anti-arnaque serait exactement le danger que Vigie combat : la victime appellerait l'escroc en croyant appeler sa banque. La règle est donc absolue — **Vigie n'affiche aucun numéro inventé, supposé, repris du message analysé ou trouvé sur un site non officiel.**
+
+Les seuls contacts écrits en dur sont au nombre de quatre, vérifiés à la main et datés dans `mobile/www/annuaire.json` :
+
+| Contact | Pourquoi |
+|---|---|
+| **Card Stop — 078 170 170** | Blocage d'une carte bancaire belge, 24 h sur 24 |
+| **Police — 101** | Menace envers une personne |
+| **Urgences — 112** | Danger immédiat |
+| **suspect@safeonweb.be** | Signalement au Centre pour la Cybersécurité Belgique |
+
+Pour une banque, un opérateur ou une administration, Vigie n'inscrit **rien** : elle affiche la consigne officielle — « appelez votre banque avec le numéro inscrit au dos de votre carte », « reprenez le numéro sur une facture papier ». Ces numéros et ces consignes sont de la donnée, pas du code : `annuaire.json` se met à jour sans toucher à l'application. Si ce fichier ne se charge pas, Vigie revient à la liste de conseils — jamais à un numéro deviné.
 
 ## Installer
 
@@ -88,7 +108,15 @@ Ouvrez l'adresse dans Safari, puis « Ajouter à l'écran d'accueil ». Une appl
 
 ## Autorisations Android
 
-Vigie demande le strict minimum : l'**appareil photo**, seulement quand vous touchez « Prendre en photo ». Elle ne demande ni contacts, ni micro, ni position, ni stockage, ni SMS, ni notifications. L'accès à Internet est déclaré par le cadre technique d'Android, mais Vigie n'envoie aucune donnée. Le détail figure dans l'application, sous Réglages → À propos et mentions légales (mentions légales, droits RGPD, autorisations).
+Vigie demande le strict minimum : l'**appareil photo**, seulement quand vous touchez « Prendre en photo ». Elle ne demande ni contacts, ni micro, ni position, ni stockage, ni SMS, ni notifications. L'accès à Internet est déclaré par le cadre technique d'Android, mais Vigie n'envoie aucune donnée.
+
+Les nouveautés de la version 0.4.0 ne demandent, elles non plus, **aucune autorisation supplémentaire** :
+
+- **Bouton « Partager »** : Vigie se déclare dans la feuille de partage d'Android, pour le texte et les images. Elle ne reçoit que ce que vous lui envoyez vous-même, et le droit de lire l'image est accordé par le partage lui-même.
+- **Presse-papier** : depuis Android 10, une application ne peut lire le presse-papier **que lorsqu'elle est au premier plan** et qu'elle a le focus. Aucune surveillance en arrière-plan n'est possible, et Vigie n'en tente aucune : elle regarde à l'ouverture et au retour dans l'application, puis vous propose de vérifier. Rien de plus.
+- **Lecture à voix haute** : utilise la synthèse vocale du téléphone, sans autorisation particulière.
+
+Le détail figure dans l'application, sous Réglages → À propos et mentions légales (mentions légales, droits RGPD, autorisations).
 
 ## Vie privée
 
@@ -96,10 +124,20 @@ Vigie demande le strict minimum : l'**appareil photo**, seulement quand vous tou
 |---|---|
 | Texte du message | Analysé sur l'appareil, jamais envoyé |
 | Photo | Lue sur l'appareil ; Vigie n'en conserve aucune copie |
+| Message partagé depuis une autre application | Remis à Vigie par Android, analysé sur l'appareil, repris une seule fois, jamais transmis |
+| Presse-papier | Lu uniquement quand Vigie est au premier plan ; le contenu n'est jamais enregistré en clair, seule une empreinte courte et non réversible du dernier contenu proposé ou écarté est gardée |
 | Historique | Sur l'appareil uniquement, désactivable, effaçable |
 | Statistiques, cookies, comptes | Aucun |
 
 L'application Android impose en outre une politique de sécurité (CSP) qui interdit tout chargement de contenu extérieur, et elle n'embarque aucun traceur.
+
+## Ce que Vigie ne fait pas
+
+- Elle **n'analyse rien toute seule.** Ni le presse-papier, ni vos messages : c'est vous qui touchez « Vérifier », ou qui partagez un message vers elle.
+- Elle **ne surveille pas le presse-papier en arrière-plan.** Android ne le permet plus depuis la version 10, et Vigie ne cherche pas à le contourner.
+- Elle **n'invente aucun numéro** et ne compose jamais celui du message analysé. Pour une banque, elle renvoie au numéro inscrit au dos de la carte.
+- Elle **n'envoie rien à votre place.** Le signalement à Safeonweb est un courriel préparé : c'est vous qui appuyez sur « Envoyer ».
+- Elle **ne remplace pas** la police, votre banque ni une personne de confiance, et « aucun signe connu » n'est pas une garantie de sécurité.
 
 ## Sous le capot
 
@@ -108,7 +146,10 @@ L'application Android impose en outre une politique de sécurité (CSP) qui inte
 | Détection | Règles lisibles : marques et domaines officiels, raccourcisseurs de liens, extensions suspectes, vocabulaire de pression (`regles.py`) |
 | Même verdict partout | Les règles sont exportées vers le téléphone (`regles.json`) ; `outils/verifier_parite.py` prouve que PC et Android répondent à l'identique |
 | Lecture des photos | Tesseract (PC) · Tesseract.js embarqué avec la langue française (Android) |
-| Application Android | Capacitor 8, synthèse vocale |
+| Une seule action | Ordre de décision explicite (menace → police, argent → Card Stop, sinon signaler ou vérifier autrement) ; numéros et consignes dans `mobile/www/annuaire.json`, de la donnée vérifiée à la main, pas du code |
+| Partage système | `intent-filter` Android `ACTION_SEND` (`text/plain` et `image/*`) et un greffon Capacitor du dépôt (`PartagePlugin.java`) : le contenu est remis à l'interface web, qui l'analyse sur place. Image acceptée jusqu'à 12 Mio, au-delà Vigie le dit au lieu de s'arrêter |
+| Presse-papier | Lecture au premier plan uniquement ; empreinte FNV-1a 32 bits du dernier contenu, pour ne jamais proposer deux fois la même chose |
+| Application Android | Capacitor 8, synthèse vocale avec choix explicite de la voix (la voix la plus naturelle de la langue en cours, modifiable dans les réglages ; en cas d'échec, lecture avec la voix par défaut) |
 | Interface | Une seule feuille de style pour le PC et Android, thème clair et sombre, police Atkinson Hyperlegible Next |
 | IA facultative (PC) | Ollama en local (`qwen2.5:3b`) : explique, ne décide jamais |
 
