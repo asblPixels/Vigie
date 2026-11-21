@@ -16,7 +16,7 @@
   const PARLE = { fr: 'fr-BE', nl: 'nl-BE', it: 'it-IT', de: 'de-DE' };
   const DATE = { fr: 'fr-BE', nl: 'nl-BE', it: 'it-IT', de: 'de-DE' };
   const detecter = () => { const l = String(navigator.language || 'fr').slice(0, 2).toLowerCase(); return LANGUES.indexOf(l) >= 0 ? l : 'fr'; };
-  const PREFS_DEFAUT = { taille: 'normal', theme: 'auto', voix: false, historique: true, langue: detecter() };
+  const PREFS_DEFAUT = { taille: 'normal', theme: 'auto', voix: false, historique: true, langue: detecter(), voixId: {} };
   let prefs = Object.assign({}, PREFS_DEFAUT, lire('vigie.prefs', {}));
 
   const DICO = window.VIGIE_I18N || {};
@@ -49,6 +49,7 @@
     document.querySelectorAll('button[data-theme]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === prefs.theme)));
     $('reg-voix').checked = !!prefs.voix;
     $('reg-histo').checked = !!prefs.historique;
+    if ($('reg-voix-choix')) remplirVoix();
     traduirePage();
   }
   function majPref(cle, valeur) {
@@ -386,13 +387,99 @@
     if (enregistrer && prefs.voix) parler(t('v.' + v + '.etiq') + '. ' + t('v.' + v + '.titre') + '. ' + conseils.slice(0, 3).join(' '));
   }
 
-  /* ================= Voix ================= */
-  function parler(texte) {
-    const P = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.TextToSpeech;
-    if (P && P.speak) { P.stop().catch(() => {}); P.speak({ text: texte, lang: PARLE[prefs.langue], rate: 0.9 }).catch(() => synthese(texte)); } else synthese(texte);
+  /* ================= Voix =================
+   * Sans choix explicite, Android lit avec le moteur de synthèse par défaut du téléphone.
+   * Celui-ci varie d'un appareil à l'autre (Google, Samsung, Acapela/Vocalizer…) : la voix
+   * n'est donc jamais la même d'un utilisateur à l'autre, et certaines sont celles des
+   * logiciels antivirus, ce qui est exactement l'inverse de l'effet recherché.
+   * On choisit donc une voix explicitement, et on laisse l'utilisateur en changer. */
+
+  const VOIX_EVITER = /acapela|vocalizer|nuance|loquendo|ivona|espeak|pico|compact/i;
+  const VOIX_GOOGLE = /-x-|google/i;
+  let VOIX = [];
+
+  const plugTTS = () => { const P = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.TextToSpeech; return (P && P.speak) ? P : null; };
+
+  async function chargerVoix() {
+    try {
+      const P = plugTTS();
+      if (P && P.getSupportedVoices) VOIX = (await P.getSupportedVoices()).voices || [];
+      else if (window.speechSynthesis) {
+        VOIX = speechSynthesis.getVoices();
+        if (!VOIX.length) await new Promise((r) => { speechSynthesis.onvoiceschanged = r; setTimeout(r, 800); }).then(() => { VOIX = speechSynthesis.getVoices(); });
+      }
+    } catch (e) { VOIX = []; }
+    return VOIX;
   }
-  function synthese(texte) {
-    try { const u = new SpeechSynthesisUtterance(texte); u.lang = PARLE[prefs.langue]; u.rate = 0.9; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* pas de voix disponible */ }
+
+  /* Voix disponibles pour la langue en cours, les plus naturelles d'abord. */
+  function voixLangue(langue) {
+    const code = (PARLE[langue] || 'fr-BE').toLowerCase(), base = code.slice(0, 2);
+    const note = (v) => {
+      const n = String(v.name || v.voiceURI || '').toLowerCase(), l = String(v.lang || '').toLowerCase().replace('_', '-');
+      let s = 0;
+      if (l === code) s += 40; else if (l.slice(0, 2) === base) s += 20;
+      if (VOIX_GOOGLE.test(n)) s += 15;      /* moteur Google : voix neuronales, les plus naturelles */
+      if (VOIX_EVITER.test(n)) s -= 30;      /* moteurs tiers, dont ceux des antivirus */
+      if (v.localService) s += 5;            /* voix embarquée : fonctionne hors ligne */
+      return s;
+    };
+    return VOIX.map((v, i) => ({ v, i, s: note(v) }))
+      .filter((x) => String(x.v.lang || '').toLowerCase().slice(0, 2) === base)
+      .sort((a, b) => b.s - a.s);
+  }
+
+  /* Index de la voix à utiliser : celle choisie dans les réglages, sinon la mieux notée. */
+  function voixCourante() {
+    const liste = voixLangue(prefs.langue);
+    if (!liste.length) return null;
+    const choisi = prefs.voixId && prefs.voixId[prefs.langue];
+    if (choisi) { const x = liste.find((y) => (y.v.voiceURI || y.v.name) === choisi); if (x) return x; }
+    return liste[0];
+  }
+
+  function parler(texte) {
+    const x = voixCourante(), P = plugTTS();
+    if (P) {
+      P.stop().catch(() => {});
+      const o = { text: texte, lang: PARLE[prefs.langue], rate: 0.92, pitch: 1.0 };
+      if (x) o.voice = x.i;
+      P.speak(o).catch(() => synthese(texte, x));
+    } else synthese(texte, x);
+  }
+
+  function synthese(texte, x) {
+    try {
+      const u = new SpeechSynthesisUtterance(texte);
+      u.lang = PARLE[prefs.langue]; u.rate = 0.92;
+      /* Le choix de la voix ne doit jamais empêcher la lecture : en cas d'échec, on lit avec celle par défaut. */
+      try {
+        if (x && x.v && x.v.voiceURI) {
+          const v = speechSynthesis.getVoices().find((y) => y.voiceURI === x.v.voiceURI); if (v) u.voice = v;
+        }
+      } catch (e) { /* voix refusée par le navigateur */ }
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch (e) { /* pas de voix disponible */ }
+  }
+
+  /* Liste déroulante des voix dans les réglages. */
+  async function remplirVoix() {
+    const sel = $('reg-voix-choix'); if (!sel) return;
+    if (!VOIX.length) await chargerVoix();
+    const liste = voixLangue(prefs.langue);
+    sel.innerHTML = '';
+    const auto = document.createElement('option');
+    auto.value = ''; auto.textContent = t('g.voix.auto');
+    sel.appendChild(auto);
+    liste.forEach((x) => {
+      const o = document.createElement('option');
+      o.value = x.v.voiceURI || x.v.name;
+      o.textContent = (x.v.name || x.v.voiceURI) + ' (' + x.v.lang + ')';
+      sel.appendChild(o);
+    });
+    sel.value = (prefs.voixId && prefs.voixId[prefs.langue]) || '';
+    sel.disabled = !liste.length;
+    const ligne = $('ligne-voix-choix'); if (ligne) ligne.hidden = !liste.length;
   }
 
   /* ================= Formulaire ================= */
@@ -416,8 +503,13 @@
   document.querySelectorAll('button[data-taille]').forEach((b) => b.addEventListener('click', () => majPref('taille', b.dataset.taille)));
   document.querySelectorAll('button[data-theme]').forEach((b) => b.addEventListener('click', () => majPref('theme', b.dataset.theme)));
   document.querySelectorAll('button[data-langue]').forEach((b) => b.addEventListener('click', () => majPref('langue', b.dataset.langue)));
-  $('reg-voix').addEventListener('change', (e) => majPref('voix', e.target.checked));
+  $('reg-voix').addEventListener('change', (e) => { majPref('voix', e.target.checked); if (e.target.checked) remplirVoix(); });
   $('reg-histo').addEventListener('change', (e) => majPref('historique', e.target.checked));
+  if ($('reg-voix-choix')) $('reg-voix-choix').addEventListener('change', (e) => {
+    const m = Object.assign({}, prefs.voixId); m[prefs.langue] = e.target.value || undefined;
+    majPref('voixId', m); parler(t('g.voix.exemple'));
+  });
+  if ($('reg-voix-test')) $('reg-voix-test').addEventListener('click', () => parler(t('g.voix.exemple')));
   $('ouvrir-apropos').addEventListener('click', () => vue('apropos', true));
   $('revoir-presentation').addEventListener('click', () => { vue('bienvenue', true); pasBienvenue(0, true); });
 
