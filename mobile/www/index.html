@@ -126,11 +126,14 @@
   <details class="carte-ligne"><summary><span data-i18n="a.s3.t">J'ai payé</span></summary><div class="details-corps"><ul><li><span data-i18n="a.s3.1">Contactez votre banque immédiatement : plus c'est rapide, plus il y a de chances d'arrêter le paiement.</span></li><li><span data-i18n="a.s3.2">Gardez les preuves : messages, captures, reçus.</span></li><li><span data-i18n="a.s3.3">Déposez plainte à la police locale.</span></li></ul></div></details>
   <details class="carte-ligne"><summary><span data-i18n="a.s4.t">Quelqu'un m'appelle « de la banque »</span></summary><div class="details-corps"><ul><li><span data-i18n="a.s4.1">Raccrochez. Une vraie banque ne demande jamais vos codes, ni de « sécuriser » votre argent sur un autre compte.</span></li><li><span data-i18n="a.s4.2">Rappelez votre banque avec le numéro inscrit au dos de votre carte, pas celui qui s'affiche.</span></li></ul></div></details>
   <h2 data-i18n="a.numeros" style="margin-top:28px">Numéros utiles</h2>
-  <div class="numeros-grille">
-    <a class="numero" href="tel:078170170"><b>Card Stop</b><span>078 170 170</span><small data-i18n="a.cs.d">Carte ou codes bancaires volés</small></a>
-    <a class="numero" href="tel:101"><b data-i18n="a.pol.t">Police</b><span>101</span><small data-i18n="a.pol.d">Urgence</small></a>
-    <a class="numero" href="tel:112"><b data-i18n="a.urg.t">Urgences</b><span>112</span><small data-i18n="a.urg.d">Danger immédiat</small></a>
-    <a class="numero" href="mailto:suspect@safeonweb.be"><b>Safeonweb</b><span>suspect@safeonweb.be</span><small data-i18n="a.saf.d">Transférer un message suspect</small></a>
+  <!-- Ces contacts sont redessinés à partir de annuaire.json, seule source à tenir à jour.
+       Le contenu ci-dessous n'est qu'un repli, identique, si le fichier ne se charge pas :
+       n'y écrivez jamais un numéro qui n'est pas dans annuaire.json. -->
+  <div class="numeros-grille" id="aide-numeros">
+    <a class="numero" data-externe href="tel:078170170"><b>Card Stop</b><span>078 170 170</span><small data-i18n="a.cs.d">Carte ou codes bancaires volés</small></a>
+    <a class="numero" data-externe href="tel:101"><b data-i18n="a.pol.t">Police</b><span>101</span><small data-i18n="a.pol.d">Urgence</small></a>
+    <a class="numero" data-externe href="tel:112"><b data-i18n="a.urg.t">Urgences</b><span>112</span><small data-i18n="a.urg.d">Danger immédiat</small></a>
+    <a class="numero" data-externe href="mailto:suspect@safeonweb.be"><b>Safeonweb</b><span>suspect@safeonweb.be</span><small data-i18n="a.saf.d">Transférer un message suspect</small></a>
   </div>
   <p class="note" data-i18n="a.note" style="margin-top:16px">Ces services sont indépendants de Vigie.</p>
 </section>
@@ -178,8 +181,8 @@
       <span>Rue Alfred Dendal 56<br>7300 Boussu · <span data-i18n="p.ed.pays">Belgique</span></span>
       <dl>
         <dt><span data-i18n="p.ed.tva">N° de TVA</span></dt><dd>BE1013334947</dd>
-        <dt><span data-i18n="p.ed.mail">Courriel</span></dt><dd><a href="mailto:Info@asblpixels.be">Info@asblpixels.be</a></dd>
-        <dt><span data-i18n="p.ed.tel">Téléphone</span></dt><dd><a href="tel:+32456960328">+32 456 96 03 28</a></dd>
+        <dt><span data-i18n="p.ed.mail">Courriel</span></dt><dd><a data-externe href="mailto:Info@asblpixels.be">Info@asblpixels.be</a></dd>
+        <dt><span data-i18n="p.ed.tel">Téléphone</span></dt><dd><a data-externe href="tel:+32456960328">+32 456 96 03 28</a></dd>
         <dt>Facebook</dt><dd>facebook.com/asblpixels</dd>
       </dl>
     </address>

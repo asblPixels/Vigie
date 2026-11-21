@@ -37,8 +37,8 @@ Un SMS, un courriel ou un courrier vous inquiète ? Vous le **photographiez** ou
 
 | Verdict | Ce que Vigie vous dit |
 |---|---|
-| **Arnaque probable** | Ne faites rien avec ce message. Voici les trois gestes à faire. |
-| **Prudence** | Des indices inquiètent. Vérifiez avant d'agir. |
+| **Arnaque probable** | Ne faites rien avec ce message. Voici **la** chose à faire, maintenant. |
+| **Prudence** | Des indices inquiètent. Vérifiez autrement, jamais avec le numéro du message. |
 | **Aucun signe connu** | Rien de suspect trouvé, mais restez attentif : ce n'est pas une garantie. |
 
 Vigie est pensée pour les personnes éloignées des outils numériques : un seul écran, un seul geste, de gros boutons, une police conçue pour la lisibilité, et une lecture à voix haute du résultat.
@@ -53,10 +53,11 @@ Vigie est pensée pour les personnes éloignées des outils numériques : un seu
 ## Dans l'application Android
 
 - **Analyse animée** : pourcentage en grands chiffres, faisceau de scan sur la photo, étapes lues à l'écran.
-- **Niveau de risque** clair (faible, moyen, élevé) et trois gestes à faire.
+- **Niveau de risque** clair (faible, moyen, élevé) et **une seule action**, immédiatement exécutable : appeler Card Stop, appeler la police, signaler et supprimer, ou vérifier autrement. L'explication vient ensuite, sous « Pourquoi ? ».
+- **Numéros d'urgence vérifiés** (`mobile/www/annuaire.json`), accessibles depuis le résultat par « J'ai besoin d'aide maintenant ». Vigie ne compose **jamais** un numéro trouvé dans le message analysé.
 - **Historique** des messages vérifiés, gardé sur le téléphone, désactivable et effaçable en un geste.
 - **Aide** : que faire si l'on a cliqué, donné ses codes, payé ou reçu un faux appel de banque ; numéros utiles.
-- **Signaler à Safeonweb** et **partager** le résultat en un geste.
+- **Partager** le résultat en un geste. Le signalement à Safeonweb prépare un courriel : c'est l'utilisateur qui appuie sur « Envoyer ».
 - **Réglages** : taille du texte (3 niveaux), thème clair, sombre ou automatique, lecture à voix haute, langue (français, néerlandais, italien, allemand).
 
 ## Installer
