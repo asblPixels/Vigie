@@ -250,7 +250,7 @@
     if (libelle) $('scan-statut').textContent = libelle;
   }
   function demarrerScan(photoURL, texte) {
-    annule = false; cible = 0; aff = 0; rapide = !photoURL; erreur('');
+    annule = false; cible = 0; aff = 0; rapide = !photoURL; erreur(''); ppCacher();
     $('scan-photo').hidden = !photoURL;
     if (photoURL) $('scan-photo').src = photoURL;
     $('scan-texte').hidden = !!photoURL;
@@ -489,7 +489,7 @@
   }));
   $('coller').addEventListener('click', () => {
     const t = $('texte');
-    if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then((x) => { if (x) t.value = x; t.focus(); }).catch(() => t.focus());
+    if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then((x) => { if (x) { t.value = x; ppCacher(); } t.focus(); }).catch(() => t.focus());
     else t.focus();
   });
   $('formulaire').addEventListener('submit', (e) => {
@@ -498,6 +498,70 @@
     if (!texte) { erreur(t('err.vide')); $('texte').focus(); return; }
     if (analyser) analyserTexte(texte);
   });
+
+  /* ================= Presse-papier : proposer ce que l'utilisateur vient de copier =================
+   * Depuis Android 10, une application ne peut lire le presse-papier QUE lorsqu'elle est au premier
+   * plan et qu'elle a le focus : aucune surveillance en arrière-plan n'est possible, et Vigie n'en
+   * tente aucune. Elle lit donc à l'ouverture et à chaque retour au premier plan, puis propose.
+   * Elle n'analyse jamais d'elle-même : l'utilisateur garde la main.
+   * Rien n'est conservé en clair : seule une empreinte courte du dernier contenu proposé ou écarté
+   * est gardée, juste de quoi ne pas reproposer deux fois la même chose. */
+  const CLE_PP = 'vigie.presse';
+  let ppTexte = null, ppMinuteur = 0, reLien = null;
+
+  /* Empreinte non réversible (FNV-1a 32 bits) : on ne peut pas en retrouver le message. */
+  function empreinte(texte) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < texte.length; i++) { h = ((h ^ texte.charCodeAt(i)) * 0x01000193) >>> 0; }
+    return h.toString(36) + '.' + texte.length;
+  }
+  const aUnLien = (texte) => { if (!reLien && R) reLien = new RegExp(R.url_re, 'i'); return !!reLien && reLien.test(texte); };
+
+  function ppCacher() { ppTexte = null; $('pp').hidden = true; }
+
+  function ppRetenir(texte) {
+    if (!texte) return;
+    ppTexte = texte;
+    $('pp-extrait').textContent = texte.replace(/\s+/g, ' ').slice(0, 90);
+    $('pp').hidden = false;
+    ecrire(CLE_PP, empreinte(texte));   // proposé une seule fois, même si le contenu reste dans le presse-papier
+  }
+
+  function ppDigneDAttention(texte) {
+    if (!texte || !R) return false;                        // sans les règles, Vigie ne peut rien vérifier
+    if (texte.length < 15 && !aUnLien(texte)) return false;   // trop court pour être un message, et sans lien
+    if (texte === $('texte').value.trim()) return false;   // déjà dans Vigie (bouton « Coller », texte que Vigie y a mis)
+    if (dernier && texte === dernier.t) return false;      // déjà vérifié
+    if (empreinte(texte) === lire(CLE_PP, '')) return false;   // déjà proposé ou écarté
+    return true;
+  }
+
+  async function ppRegarder() {
+    if (vueCourante === 'scan' || vueCourante === 'bienvenue') return;   // on n'interrompt ni l'analyse ni la présentation
+    let texte = '';
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) return;
+      texte = String((await navigator.clipboard.readText()) || '').trim();
+    } catch (e) { return; }   // lecture refusée ou impossible : rien ne s'affiche, et aucune erreur
+    if (ppTexte && texte === ppTexte) return;              // la même proposition est déjà à l'écran
+    if (ppDigneDAttention(texte)) ppRetenir(texte); else ppCacher();
+  }
+  /* Court délai : au retour au premier plan, Android n'autorise la lecture qu'une fois le focus revenu. */
+  const ppPlusTard = () => { clearTimeout(ppMinuteur); ppMinuteur = setTimeout(ppRegarder, 250); };
+
+  $('pp-verifier').addEventListener('click', () => {
+    const texte = ppTexte;
+    ppCacher();
+    if (!texte) return;
+    $('texte').value = texte;
+    if (analyser) analyserTexte(texte);
+  });
+  $('pp-ecarter').addEventListener('click', ppCacher);
+
+  const plugApp = () => { const P = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App; return (P && P.addListener) ? P : null; };
+  const A = plugApp();
+  if (A) A.addListener('resume', ppPlusTard);
+  else document.addEventListener('visibilitychange', () => { if (!document.hidden) ppPlusTard(); });
 
   /* ================= Réglages d'affichage, voix, langue, à propos ================= */
   document.querySelectorAll('button[data-taille]').forEach((b) => b.addEventListener('click', () => majPref('taille', b.dataset.taille)));
@@ -526,6 +590,7 @@
   function finBienvenue() {
     ecrire('vigie.bienvenue', 1);
     vue('accueil', false); history.replaceState({ v: 'accueil' }, '', '#accueil');
+    ppPlusTard();   // la présentation est finie : on peut proposer ce qui est dans le presse-papier
   }
   piste.addEventListener('scroll', () => {
     const k = Math.round(piste.scrollLeft / Math.max(1, piste.clientWidth));
@@ -581,7 +646,7 @@
 
   /* ================= Démarrage ================= */
   const reglesPretes = fetch('regles.json').then((r) => r.json())
-    .then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); return true; })
+    .then((j) => { R = j; analyser = VigieRegles.creerAnalyseur(R); ppPlusTard(); return true; })
     .catch(() => { erreur(t('err.regles')); return false; });
   appliquerPrefs();
   history.replaceState({ v: 'accueil' }, '', '#accueil');
@@ -596,5 +661,5 @@
     } catch (e) { /* pas d'écoute possible : le contenu sera pris au prochain démarrage */ }
     reprendrePartage(PARTAGE);
   }
-  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages, reprendrePartage };   // pour les tests automatiques
+  window.__vigie = { afficher, preparer, analyserTexte, analyserPhoto, lireImages, reprendrePartage, ppRegarder };   // pour les tests automatiques
 })();
