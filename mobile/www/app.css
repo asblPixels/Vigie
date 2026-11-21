@@ -64,6 +64,47 @@ body.sans-onglets .page{padding-bottom:32px}
 .niveau-barre.n2 i:nth-child(-n+2){background:var(--orange)}
 .niveau-barre.n1 i:first-child{background:var(--vert)}
 
+/* Résultat : l'action unique.
+ * Un seul bloc domine l'écran. Le bouton d'appel est volontairement plus grand et plus
+ * contrasté que tout le reste : public âgé, souvent en situation de stress. */
+.action{border-radius:var(--r-carte);padding:22px;margin-bottom:16px;border:1px solid;border-left-width:8px;background:var(--surface)}
+.action h2{margin:0 0 10px;font-size:1.3rem}
+.action-sur{display:block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px}
+.action-quoi{margin:14px 0 0;font-size:.95rem}
+.action .note{margin:10px 0 0}
+.action-rouge,.action-rouge-mail{background:var(--rouge-bg);border-color:var(--rouge-line);border-left-color:var(--rouge)}
+.action-rouge .action-sur,.action-rouge-mail .action-sur{color:var(--rouge)}
+.action-orange{background:var(--orange-bg);border-color:var(--orange-line);border-left-color:var(--orange)}
+.action-orange .action-sur{color:var(--orange)}
+.action-orange h2{color:var(--orange)}
+.action-consigne{margin:0;font-size:1.15rem;font-weight:700;line-height:1.45}
+.action-vert{background:var(--vert-bg);border-color:var(--vert-line);border-left-color:var(--vert);padding:18px 22px}
+.action-vert h2{font-size:1.05rem;color:var(--vert)}
+.action-vert p{margin:0;font-size:.9rem}
+.btn-action{min-height:76px;font-size:1.2rem;background:var(--nuit);color:#fff;border-color:var(--nuit);box-shadow:0 3px 0 rgba(14,42,56,.3)}
+.btn-action:hover{background:var(--nuit-2)}
+.btn-action svg{width:28px;height:28px}
+.btn-action span{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+.btn-action small{font-size:.95rem;font-weight:800;letter-spacing:.04em;opacity:.9}
+.action-rouge .btn-action{background:var(--rouge);border-color:var(--rouge);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.action-rouge .btn-action:hover{filter:brightness(1.08)}
+
+/* Bouton secondaire permanent : « J'ai besoin d'aide maintenant » */
+details.aide-vite{border-color:#BCC8CE}
+details.aide-vite>summary{min-height:58px;justify-content:center;gap:10px;font-size:1rem}
+details.aide-vite>summary svg{width:22px;height:22px;flex:none;color:var(--turquoise-fonce)}
+details.aide-vite>summary::after{display:none}
+details.pourquoi .etiquette{margin:4px 0 6px}
+details.pourquoi .etiquette:not(:first-child){margin-top:16px}
+/* Thème sombre : en sombre, --nuit et --rouge deviennent clairs. Le texte du gros bouton
+ * doit alors être foncé, sinon il devient illisible — exactement l'écran où il ne faut pas. */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="clair"]) .btn-action,:root:not([data-theme="clair"]) .btn-action:hover{color:#04222B;box-shadow:none}
+  :root:not([data-theme="clair"]) .action-rouge .btn-action,:root:not([data-theme="clair"]) .action-rouge .btn-action:hover{background:var(--rouge);border-color:var(--rouge);color:#2A0B08;box-shadow:none}
+}
+:root[data-theme="sombre"] .btn-action,:root[data-theme="sombre"] .btn-action:hover{color:#04222B;box-shadow:none}
+:root[data-theme="sombre"] .action-rouge .btn-action,:root[data-theme="sombre"] .action-rouge .btn-action:hover{background:var(--rouge);border-color:var(--rouge);color:#2A0B08;box-shadow:none}
+
 /* Historique */
 .h-item{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;margin-bottom:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-left-width:6px;border-radius:var(--r-btn)}
 .h-item.rouge{border-left-color:var(--rouge)}.h-item.orange{border-left-color:var(--orange)}.h-item.vert{border-left-color:var(--vert)}
@@ -128,3 +169,61 @@ details.carte-ligne{margin-bottom:10px}
 .points li{margin-bottom:10px}
 @media (prefers-reduced-motion:reduce){.bv-piste{scroll-behavior:auto}}
 .coordonnees a{color:var(--turquoise-fonce);font-weight:700}
+
+/* Proposition de vérifier ce que l'utilisateur vient de copier (presse-papier) */
+.pp{position:relative;display:flex;gap:14px;margin:0 0 22px;padding:16px 18px;background:var(--turquoise-pale);border:1px solid var(--turquoise-bord);border-left:5px solid var(--turquoise);border-radius:var(--r-carte)}
+.pp>svg{flex:none;width:26px;height:26px;margin-top:2px;color:var(--turquoise-fonce)}
+.pp-corps{flex:1;min-width:0}
+.pp-titre{margin:0;padding-right:36px;font-weight:700;font-size:.95rem}
+.pp-extrait{margin:6px 0 0;font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp .btn-principal{margin-top:14px}
+.pp-ecarter{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer}
+.pp-ecarter svg{width:20px;height:20px}
+
+/* Choix de la voix (réglages) */
+#ligne-voix-choix{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+#ligne-voix-choix label{display:block;font-weight:700;font-size:.85rem;color:var(--muted);margin-bottom:8px}
+#reg-voix-choix{display:block;width:100%;min-height:52px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;font:inherit;margin-bottom:10px}
+#reg-voix-choix:disabled{opacity:.5}
+
+/* Alerte : danger immédiat */
+.carte-danger{background:var(--rouge-pale,#fdecec);border:1px solid var(--rouge,#b3261e);border-left-width:5px;
+  border-radius:14px;padding:16px;margin:18px 0 26px}
+.carte-danger h2{margin:0 0 6px;font-size:1.12rem}
+.carte-danger p{margin:0 0 14px;font-size:.92rem}
+.btn-danger{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--rouge,#b3261e);
+  color:#fff;border-radius:12px;padding:16px 18px;min-height:64px;margin-bottom:10px;text-decoration:none;font-weight:700}
+.btn-danger span{font-size:1.1rem;font-weight:800;white-space:nowrap}
+.btn-danger:last-child{margin-bottom:0}
+
+/* Jeton de présence */
+.btn-jeton{display:block;width:100%;background:#fff;color:var(--rouge,#b3261e);border:2px solid var(--rouge,#b3261e);
+  border-radius:12px;padding:16px;min-height:62px;margin-top:14px;font-weight:800;font-size:1.02rem}
+.btn-jeton:disabled{opacity:.6}
+.jeton-texte{background:#fff;border:1px solid var(--line,#dde);border-radius:10px;padding:12px;margin:12px 0 10px;
+  font-size:.86rem;word-break:break-word;white-space:pre-wrap}
+
+/* ================= Accueil refondu : un seul geste ================= */
+.acc-titre{font-size:1.5rem;margin:18px 0 20px}
+#vue-accueil .geste{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:var(--turquoise,#11a08a);color:#fff;border-radius:18px;padding:30px 20px;min-height:148px;
+  font-size:1.26rem;font-weight:800;text-align:center;cursor:pointer;margin-bottom:12px}
+#vue-accueil .geste svg{width:42px;height:42px}
+#vue-accueil .geste-2{background:var(--surface,#fff);color:var(--turquoise-fonce,#0b6f60);
+  border:2px solid var(--turquoise,#11a08a);min-height:104px;font-size:1.08rem;padding:20px}
+#vue-accueil .geste-2 svg{width:32px;height:32px}
+#vue-accueil input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.replie{margin-top:6px}
+.replie>summary{list-style:none;cursor:pointer;padding:16px 4px;font-weight:700;color:var(--turquoise-fonce,#0b6f60);
+  text-align:center;font-size:.98rem}
+.replie>summary::-webkit-details-marker{display:none}
+.replie textarea{width:100%;min-height:120px;border:1px solid var(--line,#dde);border-radius:12px;
+  padding:12px;font:inherit;margin-bottom:10px}
+.btn-urgence{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:26px;
+  background:#fff;color:var(--rouge,#b3261e);border:2px solid var(--rouge,#b3261e);border-radius:14px;
+  padding:16px;min-height:62px;font-weight:800;font-size:1.02rem}
+.btn-urgence svg{width:24px;height:24px}
+.acc-note{text-align:center;margin-top:16px}
+
+/* Si le message copié est déjà proposé en haut, le gros bouton « Coller » ferait doublon. */
+#pp:not([hidden]) ~ #formulaire .geste{display:none}

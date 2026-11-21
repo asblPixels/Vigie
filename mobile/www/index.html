@@ -24,6 +24,7 @@
  <symbol id="i-reglages" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/></g></symbol>
  <symbol id="i-mail" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 7.5 8.5 6 8.5-6"/></g></symbol>
  <symbol id="i-partager" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="6" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="m8.3 10.8 7.4-3.6M8.3 13.2l7.4 3.6"/></g></symbol>
+ <symbol id="i-fermer" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="m7 7 10 10M17 7 7 17"/></symbol>
  <symbol id="i-suppr" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></g></symbol>
 </defs></svg>
 <header class="bandeau"><div class="bandeau-int">
@@ -56,47 +57,32 @@
 </section>
 
 <section class="vue active" id="vue-accueil">
-  <span class="surtitre" data-i18n="acc.surtitre">Vérification anti-arnaque</span>
-  <h1 data-i18n="acc.titre">Un message vous inquiète ?</h1>
-  <p class="intro" data-i18n="acc.intro">Prenez-le en photo ou collez-le. Vigie vous dit s'il est dangereux et quoi faire. Tout reste sur ce téléphone.</p>
-  <div class="alerte" id="erreur" role="alert" hidden><svg aria-hidden="true"><use href="#i-attention"/></svg><span id="erreur-texte"></span></div>
-  <form class="carte" id="formulaire" novalidate>
-    <label class="btn btn-camera" for="camera"><svg aria-hidden="true"><use href="#i-photo"/></svg><span data-i18n="acc.photo">Prendre en photo</span></label>
-    <input type="file" id="camera" accept="image/*" capture="environment">
-    <p class="aide-photo" data-i18n="acc.photo.aide">Photographiez l'écran ou le courrier, même s'il appartient à quelqu'un d'autre.</p>
-    <div class="ou"><span data-i18n="acc.ou">ou</span></div>
-    <label class="titre" for="texte" data-i18n="acc.label">Collez le texte du message</label>
-    <textarea id="texte" data-i18n-ph="acc.placeholder" placeholder="Exemple : « Votre colis est en attente, payez 1,99 € ici… »"></textarea>
-    <div class="outils">
-      <button class="btn btn-secondaire" type="button" id="coller"><svg aria-hidden="true"><use href="#i-coller"/></svg><span data-i18n="acc.coller">Coller</span></button>
-      <label class="btn btn-secondaire" for="galerie"><svg aria-hidden="true"><use href="#i-galerie"/></svg><span data-i18n="acc.capture">Capture d'écran</span></label>
-      <input type="file" id="galerie" accept="image/*">
+  <div class="pp" id="pp" role="region" aria-labelledby="pp-titre" hidden>
+    <svg aria-hidden="true"><use href="#i-coller"/></svg>
+    <div class="pp-corps">
+      <p class="pp-titre" id="pp-titre" data-i18n="pp.titre">Vous venez de copier un message</p>
+      <p class="pp-extrait" id="pp-extrait"></p>
+      <button class="btn btn-principal" type="button" id="pp-verifier"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="pp.verifier">Vérifier ce message</span></button>
     </div>
+    <button class="pp-ecarter" type="button" id="pp-ecarter" data-i18n-aria="pp.ecarter" aria-label="Écarter cette proposition"><svg aria-hidden="true"><use href="#i-fermer"/></svg></button>
+  </div>
+  <h1 class="acc-titre" data-i18n="acc.titre">Un message vous inquiète ?</h1>
+  <div class="alerte" id="erreur" role="alert" hidden><svg aria-hidden="true"><use href="#i-attention"/></svg><span id="erreur-texte"></span></div>
+
+  <form id="formulaire" novalidate>
+    <!-- Un seul geste : coller le message. Vigie le lit et répond aussitôt. -->
+    <button class="geste" type="button" id="coller">
+      <svg aria-hidden="true"><use href="#i-coller"/></svg>
+      <span data-i18n="acc.coller.geste">Coller le message et vérifier</span>
+    </button>
+    <textarea id="texte" data-i18n-ph="acc.placeholder" placeholder="Exemple : « Votre colis est en attente, payez 1,99 € ici… »"></textarea>
     <button class="btn btn-principal" type="submit" id="verifier"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="acc.verifier">Vérifier le message</span></button>
   </form>
+
+  <button class="btn-urgence" type="button" data-vue="aide"><svg aria-hidden="true"><use href="#i-danger"/></svg><span data-i18n="acc.danger">Je suis en danger</span></button>
+  <p class="note acc-note" data-i18n="acc.local">Tout reste sur ce téléphone.</p>
 </section>
 
-<section class="vue" id="vue-scan" aria-live="polite">
-  <span class="surtitre" data-i18n="s.surtitre.photo" id="scan-surtitre">Analyse de la photo</span>
-  <div class="scan-carte" aria-hidden="true">
-    <img id="scan-photo" alt="" hidden>
-    <div class="scan-texte" id="scan-texte" hidden></div>
-    <div class="faisceau"></div>
-    <i class="coin h-g"></i><i class="coin h-d"></i><i class="coin b-g"></i><i class="coin b-d"></i>
-  </div>
-  <div class="scan-chiffre" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-i18n-aria="s.aria" aria-label="Progression de l'analyse" id="barre">
-    <span id="scan-pct">0</span><small>%</small>
-  </div>
-  <div class="barre"><span id="barre-int"></span></div>
-  <p class="scan-statut" id="scan-statut"></p>
-  <ol class="scan-etapes" id="scan-etapes">
-    <li><span id="etape-0-txt">Photo préparée</span></li>
-    <li><span data-i18n="s.e1">Lecture du texte</span></li>
-    <li><span data-i18n="s.e2">Recherche d'indices connus</span></li>
-    <li><span data-i18n="s.e3">Verdict</span></li>
-  </ol>
-  <button class="btn btn-secondaire" type="button" id="scan-annuler"><span data-i18n="s.annuler">Annuler</span></button>
-</section>
 
 <section class="vue" id="vue-resultat"></section>
 
@@ -111,18 +97,38 @@
 <section class="vue" id="vue-aide">
   <span class="surtitre" data-i18n="a.surtitre">Si vous avez un doute</span>
   <h1 data-i18n="a.titre">Que faire si…</h1>
+  <div class="carte-danger">
+    <h2 data-i18n="a.danger.t">Je suis en danger maintenant</h2>
+    <p data-i18n="a.danger.p">Si quelqu'un vous menace ou vous fait du mal, appelez. C'est gratuit, jour et nuit.</p>
+    <!-- Ces contacts viennent de annuaire.json. Le repli ci-dessous reprend les mêmes, à l'identique. -->
+    <div id="aide-danger">
+      <a class="btn-danger" data-externe href="tel:112"><b data-i18n="a.urg.t">Urgences</b><span>112</span></a>
+      <a class="btn-danger" data-externe href="tel:101"><b data-i18n="a.pol.t">Police</b><span>101</span></a>
+      <a class="btn-danger" data-externe href="tel:080030030"><b>Écoute Violences Conjugales</b><span>0800 30 030</span></a>
+    </div>
+    <button type="button" class="btn-jeton" id="jeton" data-i18n="j.bouton">Envoyer où je suis</button>
+    <p class="note" data-i18n="j.note">Vigie lit votre position une seule fois et prépare le message. C'est vous qui l'envoyez, à qui vous voulez.</p>
+    <div id="jeton-resultat" hidden>
+      <p class="jeton-texte" id="jeton-texte"></p>
+      <button type="button" class="btn btn-secondaire" id="jeton-copier" data-i18n="j.copier">Copier le message</button>
+    </div>
+  </div>
   <details class="carte-ligne" open><summary><span data-i18n="a.s1.t">J'ai cliqué sur un lien</span></summary><div class="details-corps"><ul><li><span data-i18n="a.s1.1">Ne saisissez rien de plus : ni code, ni mot de passe.</span></li><li><span data-i18n="a.s1.2">Fermez la page. Si vous avez saisi un mot de passe, changez-le depuis le site officiel, tapé vous-même.</span></li><li><span data-i18n="a.s1.3">Surveillez vos comptes. En cas de doute, appelez votre banque.</span></li></ul></div></details>
   <details class="carte-ligne"><summary><span data-i18n="a.s2.t">J'ai donné mes codes ou ma carte</span></summary><div class="details-corps"><ul><li><span data-i18n-html="a.s2.1.h"><b>Appelez tout de suite Card Stop : 078 170 170</b> (24 h sur 24), pour bloquer la carte.</span></li><li><span data-i18n="a.s2.2">Prévenez ensuite votre banque.</span></li><li><span data-i18n="a.s2.3">Déposez plainte à la police locale, avec les messages en main.</span></li></ul></div></details>
   <details class="carte-ligne"><summary><span data-i18n="a.s3.t">J'ai payé</span></summary><div class="details-corps"><ul><li><span data-i18n="a.s3.1">Contactez votre banque immédiatement : plus c'est rapide, plus il y a de chances d'arrêter le paiement.</span></li><li><span data-i18n="a.s3.2">Gardez les preuves : messages, captures, reçus.</span></li><li><span data-i18n="a.s3.3">Déposez plainte à la police locale.</span></li></ul></div></details>
   <details class="carte-ligne"><summary><span data-i18n="a.s4.t">Quelqu'un m'appelle « de la banque »</span></summary><div class="details-corps"><ul><li><span data-i18n="a.s4.1">Raccrochez. Une vraie banque ne demande jamais vos codes, ni de « sécuriser » votre argent sur un autre compte.</span></li><li><span data-i18n="a.s4.2">Rappelez votre banque avec le numéro inscrit au dos de votre carte, pas celui qui s'affiche.</span></li></ul></div></details>
   <h2 data-i18n="a.numeros" style="margin-top:28px">Numéros utiles</h2>
-  <div class="numeros-grille">
-    <a class="numero" href="tel:078170170"><b>Card Stop</b><span>078 170 170</span><small data-i18n="a.cs.d">Carte ou codes bancaires volés</small></a>
-    <a class="numero" href="tel:101"><b data-i18n="a.pol.t">Police</b><span>101</span><small data-i18n="a.pol.d">Urgence</small></a>
-    <a class="numero" href="tel:112"><b data-i18n="a.urg.t">Urgences</b><span>112</span><small data-i18n="a.urg.d">Danger immédiat</small></a>
-    <a class="numero" href="mailto:suspect@safeonweb.be"><b>Safeonweb</b><span>suspect@safeonweb.be</span><small data-i18n="a.saf.d">Transférer un message suspect</small></a>
+  <!-- Ces contacts sont redessinés à partir de annuaire.json, seule source à tenir à jour.
+       Le contenu ci-dessous n'est qu'un repli, identique, si le fichier ne se charge pas :
+       n'y écrivez jamais un numéro qui n'est pas dans annuaire.json. -->
+  <div class="numeros-grille" id="aide-numeros">
+    <a class="numero" data-externe href="tel:078170170"><b>Card Stop</b><span>078 170 170</span><small data-i18n="a.cs.d">Carte ou codes bancaires volés</small></a>
+    <a class="numero" data-externe href="tel:101"><b data-i18n="a.pol.t">Police</b><span>101</span><small data-i18n="a.pol.d">Urgence</small></a>
+    <a class="numero" data-externe href="tel:112"><b data-i18n="a.urg.t">Urgences</b><span>112</span><small data-i18n="a.urg.d">Danger immédiat</small></a>
+    <a class="numero" data-externe href="mailto:suspect@safeonweb.be"><b>Safeonweb</b><span>suspect@safeonweb.be</span><small data-i18n="a.saf.d">Transférer un message suspect</small></a>
   </div>
   <p class="note" data-i18n="a.note" style="margin-top:16px">Ces services sont indépendants de Vigie.</p>
+  <button class="lien-discret" type="button" data-vue="reglages" data-i18n="tab.reglages" style="margin-top:18px">Réglages</button>
 </section>
 
 <section class="vue" id="vue-reglages">
@@ -146,6 +152,11 @@
   <div class="carte">
     <h2 data-i18n="g.vh">Voix et historique</h2>
     <label class="interrupteur"><span data-i18n="g.voix">Lire le résultat à voix haute</span><input type="checkbox" id="reg-voix"><i class="glissiere"></i></label>
+    <div id="ligne-voix-choix" hidden>
+      <label for="reg-voix-choix" data-i18n="g.voix.choix">Voix</label>
+      <select id="reg-voix-choix"></select>
+      <button class="btn btn-secondaire" type="button" id="reg-voix-test"><svg aria-hidden="true"><use href="#i-son"/></svg><span data-i18n="g.voix.test">Écouter un exemple</span></button>
+    </div>
     <label class="interrupteur"><span data-i18n="g.histo">Garder l'historique sur ce téléphone</span><input type="checkbox" id="reg-histo"><i class="glissiere"></i></label>
   </div>
   <button class="btn btn-secondaire" type="button" id="revoir-presentation"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="g.presentation">Revoir la présentation</span></button>
@@ -163,16 +174,16 @@
       <span>Rue Alfred Dendal 56<br>7300 Boussu · <span data-i18n="p.ed.pays">Belgique</span></span>
       <dl>
         <dt><span data-i18n="p.ed.tva">N° de TVA</span></dt><dd>BE1013334947</dd>
-        <dt><span data-i18n="p.ed.mail">Courriel</span></dt><dd><a href="mailto:Info@asblpixels.be">Info@asblpixels.be</a></dd>
-        <dt><span data-i18n="p.ed.tel">Téléphone</span></dt><dd><a href="tel:+32456960328">+32 456 96 03 28</a></dd>
+        <dt><span data-i18n="p.ed.mail">Courriel</span></dt><dd><a data-externe href="mailto:Info@asblpixels.be">Info@asblpixels.be</a></dd>
+        <dt><span data-i18n="p.ed.tel">Téléphone</span></dt><dd><a data-externe href="tel:+32456960328">+32 456 96 03 28</a></dd>
         <dt>Facebook</dt><dd>facebook.com/asblpixels</dd>
       </dl>
     </address>
     <p class="note" data-i18n="p.ed.note">Coordonnées de l'éditeur, pour les questions administratives et juridiques. L'éditeur n'assure pas d'assistance par l'application et ne reçoit aucun message analysé.</p>
   </div>
   <details class="carte-ligne"><summary><span data-i18n="p.leg.t">Mentions légales</span></summary><div class="details-corps"><ul class="points"><li data-i18n-html="p.leg.1.h"><b>Éditeur et responsable de la publication :</b> Pixel's ASBL, aux coordonnées indiquées plus haut.</li><li data-i18n-html="p.leg.2.h"><b>Hébergement :</b> aucun. Vigie fonctionne entièrement sur votre téléphone, sans serveur.</li><li data-i18n-html="p.leg.3.h"><b>Propriété intellectuelle :</b> Vigie est un logiciel libre sous licence GPL-3.0 ou ultérieure. Le nom, le logo et l'identité visuelle de Vigie restent la propriété de l'éditeur. Les composants tiers conservent leur licence.</li><li data-i18n-html="p.leg.4.h"><b>Responsabilité :</b> Vigie est une aide à la décision fournie gratuitement, « en l'état ». Elle ne garantit pas la détection de toutes les arnaques et ne remplace ni la vigilance de l'utilisateur ni les conseils d'un professionnel. Dans les limites permises par la loi, l'éditeur ne peut être tenu responsable des décisions prises ni des dommages liés à son utilisation.</li><li data-i18n-html="p.leg.5.h"><b>Indépendance :</b> Vigie n'est liée à aucune administration, banque ou entreprise citée. Les noms de marques servent uniquement à reconnaître les imitations.</li><li data-i18n-html="p.leg.6.h"><b>Droit applicable :</b> droit belge.</li></ul></div></details>
-  <details class="carte-ligne"><summary><span data-i18n="p.rgpd.t">Vie privée et droits (RGPD)</span></summary><div class="details-corps"><ul class="points"><li data-i18n-html="p.rgpd.1.h"><b>Responsable du traitement :</b> l'éditeur, aux coordonnées indiquées plus haut.</li><li data-i18n-html="p.rgpd.2.h"><b>Ce que Vigie collecte :</b> rien. Aucun compte, aucune publicité, aucune statistique, aucun traceur. Le texte des messages et les photos sont lus sur votre téléphone et ne sont envoyés à personne.</li><li data-i18n-html="p.rgpd.3.h"><b>Ce qui reste sur votre téléphone :</b> vos réglages (taille du texte, thème, langue) et, si vous le souhaitez, l'historique des messages vérifiés (50 au maximum). L'éditeur n'y a pas accès. Ces données sont conservées jusqu'à ce que vous les effaciez ou désinstalliez l'application.</li><li data-i18n-html="p.rgpd.4.h"><b>Vos droits :</b> accès, rectification, effacement, limitation, opposition et portabilité (articles 15 à 21 du RGPD). Comme les données restent sur votre téléphone, vous les exercez vous-même : consultez l'onglet Historique, effacez-le en un geste, désactivez-le dans les Réglages, ou désinstallez l'application pour tout supprimer.</li><li data-i18n-html="p.rgpd.5.h"><b>Vos envois volontaires :</b> si vous utilisez « Signaler à Safeonweb » ou « Partager », c'est vous qui envoyez le message, avec vos propres applications. Les destinataires appliquent leurs propres règles.</li><li data-i18n-html="p.rgpd.6.h"><b>Une question ?</b> Écrivez à l'éditeur (courriel ci-dessus). <b>Réclamation :</b> Autorité de protection des données, Rue de la Presse 35, 1000 Bruxelles, www.autoriteprotectiondonnees.be.</li></ul></div></details>
-  <details class="carte-ligne"><summary><span data-i18n="p.perm.t">Autorisations Android</span></summary><div class="details-corps"><p data-i18n="p.perm.intro">Vigie demande le strict minimum.</p><ul class="points"><li data-i18n-html="p.perm.cam.h"><b>Appareil photo</b> : demandé uniquement quand vous touchez « Prendre en photo ». Sert à photographier un message. La photo est lue sur le téléphone, Vigie n'en garde aucune copie.</li><li data-i18n-html="p.perm.net.h"><b>Accès à Internet</b> : déclaré par le cadre technique de l'application Android. Vigie n'envoie aucune donnée et sa politique de sécurité interne interdit tout chargement de contenu extérieur.</li><li data-i18n-html="p.perm.aucune.h"><b>Non demandées :</b> contacts, micro, position, galerie ou stockage, SMS, appels, notifications. « Capture d'écran » ouvre le sélecteur de fichiers du système : vous ne partagez que l'image choisie.</li><li data-i18n-html="p.perm.voix.h"><b>Lecture à voix haute :</b> utilise la synthèse vocale du téléphone, sans autorisation particulière.</li></ul></div></details>
+  <details class="carte-ligne"><summary><span data-i18n="p.rgpd.t">Vie privée et droits (RGPD)</span></summary><div class="details-corps"><ul class="points"><li data-i18n-html="p.rgpd.1.h"><b>Responsable du traitement :</b> l'éditeur, aux coordonnées indiquées plus haut.</li><li data-i18n-html="p.rgpd.2.h"><b>Ce que Vigie collecte :</b> rien. Aucun compte, aucune publicité, aucune statistique, aucun traceur. Le texte des messages et les photos sont lus sur votre téléphone et ne sont envoyés à personne.</li><li data-i18n-html="p.rgpd.3.h"><b>Ce qui reste sur votre téléphone :</b> vos réglages (taille du texte, thème, langue) et, si vous le souhaitez, l'historique des messages vérifiés (50 au maximum). L'éditeur n'y a pas accès. Ces données sont conservées jusqu'à ce que vous les effaciez ou désinstalliez l'application.</li><li data-i18n-html="p.rgpd.presse.h"><b>Presse-papier :</b> à l'ouverture et à chaque retour dans Vigie, le texte que vous venez de copier est lu sur le téléphone pour vous proposer de le vérifier. Rien n'est analysé sans votre accord, rien n'est envoyé et rien n'est enregistré en clair : Vigie garde seulement une empreinte du dernier contenu proposé, pour ne pas vous le reproposer deux fois.</li><li data-i18n-html="p.rgpd.4.h"><b>Vos droits :</b> accès, rectification, effacement, limitation, opposition et portabilité (articles 15 à 21 du RGPD). Comme les données restent sur votre téléphone, vous les exercez vous-même : consultez l'onglet Historique, effacez-le en un geste, désactivez-le dans les Réglages, ou désinstallez l'application pour tout supprimer.</li><li data-i18n-html="p.rgpd.5.h"><b>Vos envois volontaires :</b> si vous utilisez « Signaler à Safeonweb » ou « Partager », c'est vous qui envoyez le message, avec vos propres applications. Les destinataires appliquent leurs propres règles.</li><li data-i18n-html="p.rgpd.6.h"><b>Une question ?</b> Écrivez à l'éditeur (courriel ci-dessus). <b>Réclamation :</b> Autorité de protection des données, Rue de la Presse 35, 1000 Bruxelles, www.autoriteprotectiondonnees.be.</li></ul></div></details>
+  <details class="carte-ligne"><summary><span data-i18n="p.perm.t">Autorisations Android</span></summary><div class="details-corps"><p data-i18n="p.perm.intro">Vigie demande le strict minimum.</p><ul class="points"><li data-i18n-html="p.perm.cam.h"><b>Appareil photo</b> : demandé uniquement quand vous touchez « Prendre en photo ». Sert à photographier un message. La photo est lue sur le téléphone, Vigie n'en garde aucune copie.</li><li data-i18n-html="p.perm.net.h"><b>Accès à Internet</b> : déclaré par le cadre technique de l'application Android. Vigie n'envoie aucune donnée et sa politique de sécurité interne interdit tout chargement de contenu extérieur.</li><li data-i18n-html="p.perm.aucune.h"><b>Non demandées :</b> contacts, micro, position, galerie ou stockage, SMS, appels, notifications. « Capture d'écran » ouvre le sélecteur de fichiers du système : vous ne partagez que l'image choisie.</li><li data-i18n-html="p.perm.pos.h"><b>Position :</b> demandée uniquement quand vous touchez « Envoyer où je suis ». Lue une seule fois, insérée dans un message que vous envoyez vous-même. Vigie ne la conserve pas et ne suit personne.</li><li data-i18n-html="p.perm.partage.h"><b>Bouton « Partager » :</b> Vigie apparaît dans la feuille de partage d'Android. Elle ne reçoit que ce que vous lui envoyez vous-même, le lit sur le téléphone et ne le transmet à personne.</li><li data-i18n-html="p.perm.voix.h"><b>Lecture à voix haute :</b> utilise la synthèse vocale du téléphone, sans autorisation particulière.</li></ul></div></details>
   <details class="carte-ligne"><summary><span data-i18n="p.lic.t">Licences et crédits</span></summary><div class="details-corps"><p data-i18n="p.lic.1">Vigie : GPL-3.0 ou ultérieure. Tesseract.js : Apache-2.0. Capacitor : MIT. Police Atkinson Hyperlegible Next, Braille Institute : SIL OFL 1.1.</p><p data-i18n="p.lic.2">Vigie est un logiciel libre : vous pouvez l'utiliser, l'étudier, le partager et l'améliorer.</p></div></details>
 </section>
 
@@ -184,13 +195,10 @@
 
 <nav class="tabbar" id="tabbar" data-i18n-aria="nav.aria" aria-label="Navigation principale">
   <button type="button" data-vue="accueil"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="tab.verifier">Vérifier</span></button>
-  <button type="button" data-vue="historique"><svg aria-hidden="true"><use href="#i-historique"/></svg><span data-i18n="tab.historique">Historique</span></button>
   <button type="button" data-vue="aide"><svg aria-hidden="true"><use href="#i-aide"/></svg><span data-i18n="tab.aide">Aide</span></button>
-  <button type="button" data-vue="reglages"><svg aria-hidden="true"><use href="#i-reglages"/></svg><span data-i18n="tab.reglages">Réglages</span></button>
 </nav>
 
 <script src="regles.js"></script>
 <script src="i18n.js"></script>
-<script src="ocr/tesseract.min.js"></script>
 <script src="app.js"></script>
 </body></html>
