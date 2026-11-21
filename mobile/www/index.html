@@ -146,6 +146,11 @@
   <div class="carte">
     <h2 data-i18n="g.vh">Voix et historique</h2>
     <label class="interrupteur"><span data-i18n="g.voix">Lire le résultat à voix haute</span><input type="checkbox" id="reg-voix"><i class="glissiere"></i></label>
+    <div id="ligne-voix-choix" hidden>
+      <label for="reg-voix-choix" data-i18n="g.voix.choix">Voix</label>
+      <select id="reg-voix-choix"></select>
+      <button class="btn btn-secondaire" type="button" id="reg-voix-test"><svg aria-hidden="true"><use href="#i-son"/></svg><span data-i18n="g.voix.test">Écouter un exemple</span></button>
+    </div>
     <label class="interrupteur"><span data-i18n="g.histo">Garder l'historique sur ce téléphone</span><input type="checkbox" id="reg-histo"><i class="glissiere"></i></label>
   </div>
   <button class="btn btn-secondaire" type="button" id="revoir-presentation"><svg aria-hidden="true"><use href="#i-bouclier"/></svg><span data-i18n="g.presentation">Revoir la présentation</span></button>

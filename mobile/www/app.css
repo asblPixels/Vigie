@@ -128,3 +128,9 @@ details.carte-ligne{margin-bottom:10px}
 .points li{margin-bottom:10px}
 @media (prefers-reduced-motion:reduce){.bv-piste{scroll-behavior:auto}}
 .coordonnees a{color:var(--turquoise-fonce);font-weight:700}
+
+/* Choix de la voix (réglages) */
+#ligne-voix-choix{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+#ligne-voix-choix label{display:block;font-weight:700;font-size:.85rem;color:var(--muted);margin-bottom:8px}
+#reg-voix-choix{display:block;width:100%;min-height:52px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;font:inherit;margin-bottom:10px}
+#reg-voix-choix:disabled{opacity:.5}
